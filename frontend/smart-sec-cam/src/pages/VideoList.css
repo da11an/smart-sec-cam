@@ -1,28 +1,61 @@
-.VideoList {
-    background-color: white;
-    min-height: 100vh;
-    min-width: 100vw;
+.dateList ul {
+    list-style: none;
+    padding: 0;
 }
 
-.videoContainer {
-    display:flex; 
-    flex-direction:row;
-    background-color:#1c1c1c;
+.dateList li {
+    margin-bottom: 10px;
 }
 
-.videoPlayer {
-    width: 75%;
+.videoGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    padding: 16px;
 }
 
-.videoList {
-    width: 25%;
-    max-height: 99vh;
+.videoThumbnailButton {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
 }
 
-.videoList ul {
-    list-style-type: none;
-}
-
-.NavBar {
+.videoThumbnail {
     width: 100%;
+    height: auto;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-bottom: 5px;
+}
+
+.videoModalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.videoModal {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow: auto;
+}
+
+.closeButton {
+    background: red;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 10px;
 }

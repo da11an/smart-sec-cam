@@ -1,141 +1,109 @@
-import React from "react";
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import ReactPlayer from "react-player";
+import ReactModal from "react-modal";
 
-import { isIOS } from 'react-device-detect' 
-import { useCookies } from 'react-cookie';
+const SERVER_URL = "https://localhost:8443";
+const VIDEO_ENDPOINT = "/api/video/";
 
-import { VideoPlayer, VideoPreviewer } from "../components/VideoComponents";
-import NavBar from "../components/NavBar";
+export default function VideoList({ videoFileNames, cookies }) {
+    const [selectedDate, setSelectedDate] = useState(null);
+    const [selectedVideo, setSelectedVideo] = useState(null);
 
-import { validateToken } from "../utils/ValidateToken";
-import { getTokenTTL } from "../utils/GetTokenTTL";
-import { refreshToken } from "../utils/RefreshToken";
-import "./VideoList.css"
+    // Helper function to extract date from filename
+    const extractDateFromFileName = (fileName) => {
+        const match = fileName.match(/__(\d{4}-\d{2}-\d{2})_/); // Extracts YYYY-MM-DD
+        return match ? match[1] : null;
+    };
 
-
-const SERVER_URL = "https://localhost:8443"
-const VIDEOS_ENDPOINT = "/api/video/video-list"
-
-export default function VideoList(props) {
-    const [videoFileNames, setVideoFileNames] = React.useState([]);
-    const [selectedVideoFile, setSelectedVideoFile] = React.useState(null);
-    const [hasValidToken, setHasValidToken] = React.useState(null);
-    const [tokenTTL, setTokenTTL] = React.useState(null);
-    const [cookies, setCookie] = useCookies(["token"]);
-    const navigate = useNavigate();
-
-    React.useEffect(() => {
-        // Check cookie for valid token. If not, navigate to the login screen
-        if (cookies.token == null) {
-            navigate('/', { });
-        }
-        else {
-            try {
-                validateToken(cookies.token, setHasValidToken);
+    // Group videos by date
+    const videosByDate = videoFileNames.reduce((acc, videoFileName) => {
+        const date = extractDateFromFileName(videoFileName);
+        if (date) {
+            if (!acc[date]) {
+                acc[date] = [];
             }
-            catch {
-                navigate('/', { });
-            }
-            
-        }  
-    }, []);
+            acc[date].push(videoFileName);
+        }
+        return acc;
+    }, {});
 
-    React.useEffect(() => {
-        if (hasValidToken) {
-            // Get Token's TTL
-            getTokenTTL(cookies.token, setTokenTTL);
-            // Get video data
-            const requestOptions = {
-                method: 'GET',
-                headers: { 'x-access-token': cookies.token },
-            };
-            // Get room list
-            let videoFormat = "webm";
-            if (isIOS) {
-                videoFormat = "mp4"
-            }
-            const requestUrl = SERVER_URL + VIDEOS_ENDPOINT + "?video-format=" + videoFormat;
-            fetch(requestUrl, requestOptions)
-                .then((resp) => resp.json())
-                .then((data) => setVideoList(data['videos']));
-        }
-        else if (hasValidToken === false) {
-            navigate('/', { });
-        }
-    }, [hasValidToken]);
+    const handleDateClick = (date) => {
+        setSelectedDate(date);
+    };
 
-    React.useEffect(() => {
-        if (tokenTTL == null) {
-            return;
-        }
-        // If TTL is negative, token is expired or invalid. Navigate to login
-        if (tokenTTL < 0) {
-            navigate('/', { });
-        }
-        // Subtract a minute from the token interval and convert it to milliseconds
-        let tokenRefreshInterval = 0;
-        if (tokenTTL - 60 >= 0) {
-            tokenRefreshInterval = (tokenTTL - 60) * 1000;
-        }
-        // Start timer to refresh token in background
-        const timer = setTimeout(function(){
-            refreshToken(cookies.token, setCookie);
-            // Set hasValidToken to null so that it gets picked up by the hook
-            setHasValidToken(null);
-        }, tokenRefreshInterval);
-        return () => clearTimeout(timer);
-    }, [tokenTTL]);
-
-    React.useEffect(() => {
-        if (cookies == null || cookies.token == null) {
-            return;
-        }
-        // Validate Token
-        try {
-            validateToken(cookies.token, setHasValidToken);
-        }
-        catch {
-            navigate('/', { });
-        }
-    }, [cookies])
-
-    function setVideoList(videoList) {
-        setVideoFileNames(videoList);
-        setSelectedVideoFile(videoList[0]);
-        
-    }
-
-    function handleClick(videoFileName) {
-        setSelectedVideoFile(videoFileName);
-    }
+    const closeModal = () => {
+        setSelectedVideo(null);
+    };
 
     return (
         <div className="VideoList">
-            <NavBar />
-            <div className="videoContainer">
-                <div className="videoList">
-                    <React.Fragment>
-                        <ul className="list-group">
-                            {videoFileNames.map((videoFileName) => (
-                                <li key={videoFileName}>
-                                    <button
-                                        value={videoFileName}
-                                        onClick={(event) => handleClick(event.target.value)}
-                                        className="videoThumbnailButton"
-                                    >
-                                        <VideoPreviewer videoFileName={videoFileName} token={cookies.token} />
-                                        <span className="videoFileName">{videoFileName}</span>
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
-                    </React.Fragment>
+            {/* Date List */}
+            {!selectedDate && (
+                <div className="dateList">
+                    <ul>
+                        {Object.keys(videosByDate).map((date) => (
+                            <li key={date}>
+                                <button onClick={() => handleDateClick(date)}>
+                                    {date} ({videosByDate[date].length})
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
-                <div className="videoPlayer">
-                    <VideoPlayer videoFileName={selectedVideoFile} token={cookies.token} />
+            )}
+
+            {/* Video Grid for Selected Date */}
+            {selectedDate && (
+                <div className="videoContainer">
+                    <button onClick={() => setSelectedDate(null)}>Back to Dates</button>
+                    <div className="videoGrid">
+                        {videosByDate[selectedDate].map((videoFileName) => (
+                            <button
+                                key={videoFileName}
+                                className="videoThumbnailButton"
+                                onClick={() => setSelectedVideo(videoFileName)}
+                            >
+                                <video
+                                    className="videoThumbnail"
+                                    width="200"
+                                    height="120"
+                                    muted
+                                    loop
+                                    autoPlay
+                                >
+                                    <source
+                                        src={`${SERVER_URL}${VIDEO_ENDPOINT}${videoFileName}?token=${cookies.token}`}
+                                        type="video/webm"
+                                    />
+                                    Your browser does not support the video tag.
+                                </video>
+                                <span>{videoFileName}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
+
+            {/* Modal for Video Playback */}
+            <ReactModal
+                isOpen={!!selectedVideo}
+                onRequestClose={closeModal}
+                className="videoModal"
+                overlayClassName="videoModalOverlay"
+            >
+                <button className="closeButton" onClick={closeModal}>
+                    Close
+                </button>
+                {selectedVideo && (
+                    <ReactPlayer
+                        url={`${SERVER_URL}${VIDEO_ENDPOINT}${selectedVideo}?token=${cookies.token}`}
+                        width="100%"
+                        height="90vh"
+                        controls
+                        playing
+                    />
+                )}
+            </ReactModal>
         </div>
     );
-
-};
+}
