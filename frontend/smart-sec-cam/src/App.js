@@ -117,8 +117,11 @@ export default function App() {
 
     return (
         <div className="App">
-            <NavBar token={cookies.token}/>
-            {components}
+            <NavBar token={cookies.token} />
+            {/* Wrap the components in a container */}
+            <div className="image-container">
+                {components}
+            </div>
         </div>
-    );
+    );    
 };

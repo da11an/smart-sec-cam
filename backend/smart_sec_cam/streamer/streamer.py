@@ -17,8 +17,10 @@ class Streamer:
                  use_pi_camera: bool = False, image_rotation: int = 0):
         self.cap_delay = capture_delay
         if use_pi_camera:
+            print('Attempting to use RPiCamera...')
             self.camera = RPiCamera(image_rotation=image_rotation)
         else:
+            print('Attempting to use UsbCamera...')
             self.camera = UsbCamera(camera_port, image_rotation=image_rotation)
         # Image data queues
         self.image_queue = queue.Queue(maxsize=int(5.0/capture_delay))  # Only queue 5 seconds of video
@@ -32,7 +34,9 @@ class Streamer:
         print('Starting image capture thread')
         while not shutdown:
             try:
+                # print('Image capturing...')
                 self.image_queue.put(self.camera.capture_image())
+                # print('image_queue size', self.image_queue.qsize())
                 time.sleep(self.cap_delay)  # Prevents capture from eating cpu time
             except RuntimeError as e:
                 print(e)
@@ -47,9 +51,10 @@ class Streamer:
         while not shutdown:
             image_data = self.image_queue.get()
             try:
+                # print('Image sending...')
                 self.image_sender.send_message(image_data)
-            except redis.exceptions.ConnectionError:
-                print("Caught connection error to server, trying to reconnect...")
+            except redis.exceptions.ConnectionError as e:
+                print(f"Caught connection error to server {e}, trying to reconnect...")
                 time.sleep(1)
                 self.reconnect()
         print("Exited image sending thread")

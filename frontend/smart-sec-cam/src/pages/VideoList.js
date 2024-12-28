@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { isIOS } from 'react-device-detect' 
 import { useCookies } from 'react-cookie';
 
-import VideoPlayer from "../components/VideoPlayer";
+import { VideoPlayer, VideoPreviewer } from "../components/VideoComponents";
 import NavBar from "../components/NavBar";
 
 import { validateToken } from "../utils/ValidateToken";
@@ -116,13 +116,18 @@ export default function VideoList(props) {
                 <div className="videoList">
                     <React.Fragment>
                         <ul className="list-group">
-                        {videoFileNames.map(videoFileName => (
-                            <li>
-                                <button value={videoFileName} onClick={event => handleClick(event.target.value)}>
-                                    {videoFileName}
-                                </button>
-                            </li>
-                        ))}
+                            {videoFileNames.map((videoFileName) => (
+                                <li key={videoFileName}>
+                                    <button
+                                        value={videoFileName}
+                                        onClick={(event) => handleClick(event.target.value)}
+                                        className="videoThumbnailButton"
+                                    >
+                                        <VideoPreviewer videoFileName={videoFileName} token={cookies.token} />
+                                        <span className="videoFileName">{videoFileName}</span>
+                                    </button>
+                                </li>
+                            ))}
                         </ul>
                     </React.Fragment>
                 </div>

@@ -7,9 +7,7 @@ import redis
 
 
 class RedisImageReceiver:
-    listener_sleep_time = 0.01
-
-    def __init__(self, redis_host: str = "localhost", redis_port: int = 6379):
+    def __init__(self, redis_host: str = "localhost", redis_port: int = 6379, listener_sleep_time: float = 0.01):
         self.redis_host = redis_host
         self.redis_port = redis_port
         self.message_queue = queue.Queue()
@@ -17,6 +15,7 @@ class RedisImageReceiver:
         self.r_conn = redis.StrictRedis(host=self.redis_host, port=self.redis_port)
         self.pubsub = self.r_conn.pubsub()
         self.listener_thread = None
+        self.listener_sleep_time = listener_sleep_time
 
     def set_channels(self, channels: List[str]):
         self.subscribed_channels = channels
@@ -63,4 +62,4 @@ class RedisImageReceiver:
     def _listen_for_messages(self):
         while True:
             self._get_new_pubsub_message()
-            time.sleep(0.01)
+            time.sleep(self.listener_sleep_time)

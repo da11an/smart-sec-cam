@@ -1,29 +1,38 @@
-FROM node:16-alpine as build-static
+# Stage 1: Build Static Frontend Files
+FROM node:16-alpine AS build-static
 
 WORKDIR /frontend
 RUN mkdir -p certs
 
-COPY frontend/smart-sec-cam/ .
+# Copy only package.json and package-lock.json for dependency installation
+COPY frontend/smart-sec-cam/package.json frontend/smart-sec-cam/package-lock.json ./
 
-RUN npx browserslist@latest --update-db
-
+# Install dependencies and cache the layer
 RUN npm install
-RUN npm update
-RUN npm audit fix || true
-RUN npm install -g serve
+
+# Copy the rest of the frontend source code
+COPY frontend/smart-sec-cam/ ./
+
+# Build the frontend
 RUN npm run build
 
-FROM python:3.10-slim-buster as run
+# Stage 2: Build and Run Backend
+FROM python:3.10-slim-buster AS run
 
-MAINTAINER Scott Barnes "sgbarnes@protonmail.com"
+LABEL maintainer="Scott Barnes <sgbarnes@protonmail.com>"
 
-WORKDIR backend/
+WORKDIR /backend/
 RUN mkdir -p certs
-COPY backend/ .
 
-COPY --from=build-static /frontend/build/ /backend/build
+# Copy the backend source code
+COPY backend/ ./
 
-RUN python -m pip install --upgrade pip
-RUN python -m pip install .[server]
+# Copy the built static files from the previous stage
+COPY --from=build-static /frontend/build/ /backend/build/
 
-ENTRYPOINT /backend/smart_sec_cam/server/docker-entrypoint.sh
+# Upgrade pip and install backend dependencies
+RUN python -m pip install --no-cache-dir --upgrade pip
+RUN python -m pip install --no-cache-dir .[server]
+
+# Set the entrypoint script
+ENTRYPOINT ["/backend/smart_sec_cam/server/docker-entrypoint.sh"]

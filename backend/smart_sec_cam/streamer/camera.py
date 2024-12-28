@@ -4,8 +4,13 @@ import cv2
 import numpy as np
 
 
+res_1080p = (1080, 1920)
+res_720p = (720, 1280)
+res_640 = (640, 480)
+res_usb = res_720p
+
 class UsbCamera:
-    def __init__(self, usb_port: int = 0, resolution: Tuple[int, int] = (480, 640), jpeg_quality: int = 70,
+    def __init__(self, usb_port: int = 0, resolution: Tuple[int, int] = res_usb, jpeg_quality: int = 70,
                  image_rotation: int = 0):
         self.usb_port = usb_port
         self.resolution = resolution
@@ -44,7 +49,7 @@ class UsbCamera:
 
 
 class RPiCamera:
-    def __init__(self, resolution: Tuple[int, int] = (640, 480), jpeg_quality: int = 70, image_rotation: int = 0):
+    def __init__(self, resolution: Tuple[int, int] = res_640, jpeg_quality: int = 70, image_rotation: int = 0):
         from picamera import PiCamera  # Only import picamera at runtime, since it won't install on other systems
 
         self.encode_params = [int(cv2.IMWRITE_JPEG_QUALITY), jpeg_quality]
