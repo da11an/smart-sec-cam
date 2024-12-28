@@ -46,6 +46,34 @@ class VideoManager:
             filenames_by_date[date].append(filename)
         return filenames_by_date
 
+    def delete_video(self, video_name: str) -> None:
+        """
+        Deletes the specified video file and its alternate formats from the directory.
+        
+        :param video_name: The base name of the video file (without extension) to delete.
+        :raises FileNotFoundError: If neither version of the video file exists.
+        :raises PermissionError: If the file cannot be deleted due to permission issues.
+        """
+        deleted_any = False  # Track if any files were deleted
+
+        # Remove any existing extension from the video name
+        base_name = strip_extension(video_name)
+
+        for video_format, extension in self.VIDEO_FORMATS.items():
+            video_path = os.path.join(self.video_dir, f"{base_name}{extension}")
+            if os.path.isfile(video_path):
+                try:
+                    os.remove(video_path)
+                    deleted_any = True
+                    print(f"Deleted: {video_path}")  # Debugging or logging
+                except PermissionError as e:
+                    raise PermissionError(f"Permission denied while deleting '{video_path}': {e}")
+                except Exception as e:
+                    raise Exception(f"An error occurred while deleting '{video_path}': {e}")
+
+        if not deleted_any:
+            raise FileNotFoundError(f"Video file '{video_name}' does not exist in any supported format.")
+
     def _get_all_filenames(self) -> List[str]:
         return os.listdir(self.video_dir)
 
@@ -58,3 +86,12 @@ class VideoManager:
         if file_type in filename:
             return filename.replace(file_type, "")
         raise ValueError("File is not a supported file type")
+
+
+def strip_extension(filename: str) -> str:
+    """
+    Removes the file extension from a filename.
+    :param filename: The filename with or without an extension.
+    :return: The filename without its extension.
+    """
+    return os.path.splitext(filename)[0]

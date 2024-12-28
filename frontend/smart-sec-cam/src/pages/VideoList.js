@@ -13,13 +13,14 @@ import "./VideoList.css";
 
 const SERVER_URL = "https://localhost:8443";
 const VIDEOS_ENDPOINT = "/api/video/video-list";
+const DELETE_VIDEO_ENDPOINT = "/api/video";
 
 export default function VideoList(props) {
     const [videoFileNames, setVideoFileNames] = React.useState([]);
     const [selectedVideoFile, setSelectedVideoFile] = React.useState(null);
     const [hasValidToken, setHasValidToken] = React.useState(null);
     const [tokenTTL, setTokenTTL] = React.useState(null);
-    const [cookies, setCookie] = useCookies(["token"]);
+    const [cookies] = useCookies(["token"]);
     const navigate = useNavigate();
 
     const [currentPage, setCurrentPage] = React.useState(1);
@@ -70,7 +71,7 @@ export default function VideoList(props) {
         const tokenRefreshInterval = Math.max((tokenTTL - 60) * 1000, 0);
 
         const timer = setTimeout(() => {
-            refreshToken(cookies.token, setCookie);
+            refreshToken(cookies.token);
             setHasValidToken(null);
         }, tokenRefreshInterval);
 
@@ -97,6 +98,31 @@ export default function VideoList(props) {
         setSelectedVideoFile(videoFileName);
     }
 
+    function handleDelete(videoFileName) {
+        const requestOptions = {
+            method: "DELETE",
+            headers: {
+                "x-access-token": cookies.token,
+                "Content-Type": "application/json",
+            },
+        };
+
+        fetch(`${SERVER_URL}${DELETE_VIDEO_ENDPOINT}/${videoFileName}`, requestOptions)
+            .then((resp) => {
+                if (resp.ok) {
+                    setVideoFileNames((prev) => prev.filter((name) => name !== videoFileName));
+
+                    // Clear selected video if it’s the deleted one
+                    if (selectedVideoFile === videoFileName) {
+                        setSelectedVideoFile(null);
+                    }
+                } else {
+                    console.error("Failed to delete video:", resp.statusText);
+                }
+            })
+            .catch((error) => console.error("Error deleting video:", error));
+    }
+
     const totalPages = Math.ceil(videoFileNames.length / itemsPerPage);
     const paginatedItems = videoFileNames.slice(
         (currentPage - 1) * itemsPerPage,
@@ -119,7 +145,6 @@ export default function VideoList(props) {
                             {paginatedItems.map((videoFileName) => (
                                 <li key={videoFileName}>
                                     <button
-                                        value={videoFileName}
                                         onClick={() => handleClick(videoFileName)}
                                         className="videoThumbnailButton"
                                     >
@@ -149,8 +174,26 @@ export default function VideoList(props) {
                         </div>
                     </React.Fragment>
                 </div>
-                <div className="videoPlayer">
-                    <VideoPlayer videoFileName={selectedVideoFile} token={cookies.token} />
+                <div className="videoPlayerContainer">
+                    {selectedVideoFile && (
+                        <>
+                            <div className="videoInfoBar">
+                                <span className="videoFileName">{selectedVideoFile}</span>
+                                <button
+                                    onClick={() => handleDelete(selectedVideoFile)}
+                                    className="deleteButton"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                            <div className="videoPlayer">
+                                <VideoPlayer
+                                    videoFileName={selectedVideoFile}
+                                    token={cookies.token}
+                                />
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

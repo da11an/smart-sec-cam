@@ -5,7 +5,7 @@ from functools import wraps
 
 import eventlet
 import jwt.exceptions
-from flask import Flask, send_from_directory, render_template, request
+from flask import Flask, send_from_directory, render_template, request, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO, join_room
 
@@ -207,6 +207,22 @@ def get_video(file_name: str):
     else:
         return json.dumps({'status': "ERROR"}), 404, {'ContentType': 'application/json'}
     return send_from_directory(VIDEO_DIR, file_name, as_attachment=True, mimetype=mime_type)
+
+
+@app.route('/api/video/<video_name>', methods=['DELETE'])
+def delete_video(video_name):
+    print(f"DELETE request received for video: {video_name}")
+    global VIDEO_DIR
+    video_manager = VideoManager(video_dir=VIDEO_DIR)
+    try:
+        video_manager.delete_video(video_name)
+        return jsonify({"message": f"Video '{video_name}' and its alternate formats deleted successfully."}), 200
+    except FileNotFoundError:
+        return jsonify({"error": f"Video '{video_name}' not found in any format."}), 404
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {e}"}), 500
 
 
 def listen_for_images(redis_url: str, redis_port: int):
