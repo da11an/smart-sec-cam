@@ -17,20 +17,19 @@ export function VideoPlayer(props) {
     );
 }
 
-export function VideoPreviewer(props) {
-    const videoUrl = SERVER_URL + VIDEO_ENDPOINT + props.videoFileName + "?token=" + props.token;
+export function VideoPreviewer({ videoFileName, token }) {
+    const videoUrl = `${SERVER_URL}${VIDEO_ENDPOINT}${videoFileName}?token=${token}`;
+
     return (
         <video
             className="videoThumbnail"
-            width="200"
-            height="120"
             muted
             loop
             autoPlay
+            playsInline
         >
-            <source src={videoUrl} type="video/webm"/>
+            <source src={videoUrl} type="video/webm" />
             Your browser does not support the video tag.
         </video>
-    )
-    
+    );
 }

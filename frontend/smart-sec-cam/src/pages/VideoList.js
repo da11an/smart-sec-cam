@@ -1,8 +1,7 @@
 import React from "react";
-import { useNavigate } from 'react-router-dom';
-
-import { isIOS } from 'react-device-detect';
-import { useCookies } from 'react-cookie';
+import { useNavigate } from "react-router-dom";
+import { isIOS } from "react-device-detect";
+import { useCookies } from "react-cookie";
 
 import { VideoPlayer, VideoPreviewer } from "../components/VideoComponents";
 import NavBar from "../components/NavBar";
@@ -23,32 +22,28 @@ export default function VideoList(props) {
     const [cookies, setCookie] = useCookies(["token"]);
     const navigate = useNavigate();
 
-    // Pagination state
     const [currentPage, setCurrentPage] = React.useState(1);
     const itemsPerPage = 5;
 
     React.useEffect(() => {
-        // Check cookie for valid token. If not, navigate to the login screen
         if (cookies.token == null) {
-            navigate('/', {});
+            navigate("/", {});
         } else {
             try {
                 validateToken(cookies.token, setHasValidToken);
             } catch {
-                navigate('/', {});
+                navigate("/", {});
             }
         }
     }, []);
 
     React.useEffect(() => {
         if (hasValidToken) {
-            // Get Token's TTL
             getTokenTTL(cookies.token, setTokenTTL);
 
-            // Get video data
             const requestOptions = {
-                method: 'GET',
-                headers: { 'x-access-token': cookies.token },
+                method: "GET",
+                headers: { "x-access-token": cookies.token },
             };
 
             let videoFormat = "webm";
@@ -59,9 +54,9 @@ export default function VideoList(props) {
             const requestUrl = `${SERVER_URL}${VIDEOS_ENDPOINT}?video-format=${videoFormat}`;
             fetch(requestUrl, requestOptions)
                 .then((resp) => resp.json())
-                .then((data) => setVideoList(data['videos']));
+                .then((data) => setVideoList(data["videos"]));
         } else if (hasValidToken === false) {
-            navigate('/', {});
+            navigate("/", {});
         }
     }, [hasValidToken]);
 
@@ -70,7 +65,7 @@ export default function VideoList(props) {
             return;
         }
         if (tokenTTL < 0) {
-            navigate('/', {});
+            navigate("/", {});
         }
         const tokenRefreshInterval = Math.max((tokenTTL - 60) * 1000, 0);
 
@@ -89,7 +84,7 @@ export default function VideoList(props) {
         try {
             validateToken(cookies.token, setHasValidToken);
         } catch {
-            navigate('/', {});
+            navigate("/", {});
         }
     }, [cookies]);
 
@@ -102,7 +97,6 @@ export default function VideoList(props) {
         setSelectedVideoFile(videoFileName);
     }
 
-    // Pagination Logic
     const totalPages = Math.ceil(videoFileNames.length / itemsPerPage);
     const paginatedItems = videoFileNames.slice(
         (currentPage - 1) * itemsPerPage,
@@ -126,10 +120,13 @@ export default function VideoList(props) {
                                 <li key={videoFileName}>
                                     <button
                                         value={videoFileName}
-                                        onClick={(event) => handleClick(event.target.value)}
+                                        onClick={() => handleClick(videoFileName)}
                                         className="videoThumbnailButton"
                                     >
-                                        <VideoPreviewer videoFileName={videoFileName} token={cookies.token} />
+                                        <VideoPreviewer
+                                            videoFileName={videoFileName}
+                                            token={cookies.token}
+                                        />
                                         <span className="videoFileName">{videoFileName}</span>
                                     </button>
                                 </li>
