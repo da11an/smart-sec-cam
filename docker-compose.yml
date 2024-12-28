@@ -2,7 +2,7 @@ version: '3'
 
 services:
   redis:
-    image: "ghcr.io/scottbarnesg/smart-sec-cam/sec-cam-redis:latest"
+    image: "redis-arm:latest"
     build:
       context: backend/smart_sec_cam/redis
     ports:
@@ -10,7 +10,7 @@ services:
       - "6380:6380"
     restart: always
   server:
-    image: "ghcr.io/scottbarnesg/smart-sec-cam/sec-cam-server:latest"
+    image: "server-arm:latest"
     build:
       context: .
       dockerfile: backend/smart_sec_cam/server/Dockerfile
@@ -21,14 +21,14 @@ services:
     environment:
       - API_URL=${API_URL}
       - PYTHONUNBUFFERED=1
-      - ENABLE_REGISTRATION=0
+      - ENABLE_REGISTRATION=1
     ports:
       - "8443:8443"
     depends_on:
       - redis
     restart: always
   motion-detection:
-    image: "ghcr.io/scottbarnesg/smart-sec-cam/sec-cam-motion:latest"
+    image: "motion-arm:latest"
     build:
       context: backend/
       dockerfile: smart_sec_cam/motion/Dockerfile
