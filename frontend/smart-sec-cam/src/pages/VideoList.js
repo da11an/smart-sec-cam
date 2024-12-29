@@ -2,8 +2,9 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { isIOS } from "react-device-detect";
 import { useCookies } from "react-cookie";
+import Modal from "react-modal";
 
-import { VideoPlayer, VideoPreviewer } from "../components/VideoComponents";
+import { VideoPreviewer } from "../components/VideoComponents";
 import NavBar from "../components/NavBar";
 
 import { validateToken } from "../utils/ValidateToken";
@@ -13,18 +14,21 @@ import "./VideoList.css";
 
 const SERVER_URL = "https://localhost:8443";
 const VIDEOS_ENDPOINT = "/api/video/video-list";
-const DELETE_VIDEO_ENDPOINT = "/api/video";
+const DELETE_VIDEO_ENDPOINT = "/api/video/delete";
+
+Modal.setAppElement("#root");
 
 export default function VideoList(props) {
     const [videoFileNames, setVideoFileNames] = React.useState([]);
     const [selectedVideoFile, setSelectedVideoFile] = React.useState(null);
+    const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [hasValidToken, setHasValidToken] = React.useState(null);
     const [tokenTTL, setTokenTTL] = React.useState(null);
     const [cookies] = useCookies(["token"]);
     const navigate = useNavigate();
 
     const [currentPage, setCurrentPage] = React.useState(1);
-    const itemsPerPage = 5;
+    const itemsPerPage = 12;
 
     React.useEffect(() => {
         if (cookies.token == null) {
@@ -78,24 +82,13 @@ export default function VideoList(props) {
         return () => clearTimeout(timer);
     }, [tokenTTL]);
 
-    React.useEffect(() => {
-        if (cookies == null || cookies.token == null) {
-            return;
-        }
-        try {
-            validateToken(cookies.token, setHasValidToken);
-        } catch {
-            navigate("/", {});
-        }
-    }, [cookies]);
-
     function setVideoList(videoList) {
         setVideoFileNames(videoList);
-        setSelectedVideoFile(videoList[0]);
     }
 
     function handleClick(videoFileName) {
         setSelectedVideoFile(videoFileName);
+        setIsModalOpen(true);
     }
 
     function handleDelete(videoFileName) {
@@ -111,11 +104,6 @@ export default function VideoList(props) {
             .then((resp) => {
                 if (resp.ok) {
                     setVideoFileNames((prev) => prev.filter((name) => name !== videoFileName));
-
-                    // Clear selected video if it’s the deleted one
-                    if (selectedVideoFile === videoFileName) {
-                        setSelectedVideoFile(null);
-                    }
                 } else {
                     console.error("Failed to delete video:", resp.statusText);
                 }
@@ -138,64 +126,65 @@ export default function VideoList(props) {
     return (
         <div className="VideoList">
             <NavBar />
-            <div className="videoContainer">
-                <div className="videoList">
-                    <React.Fragment>
-                        <ul className="list-group">
-                            {paginatedItems.map((videoFileName) => (
-                                <li key={videoFileName}>
-                                    <button
-                                        onClick={() => handleClick(videoFileName)}
-                                        className="videoThumbnailButton"
-                                    >
-                                        <VideoPreviewer
-                                            videoFileName={videoFileName}
-                                            token={cookies.token}
-                                        />
-                                        <span className="videoFileName">{videoFileName}</span>
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
-                        <div className="pagination">
+            <div className="videoGridContainer">
+                <div className="videoGrid">
+                    {paginatedItems.map((videoFileName) => (
+                        <div key={videoFileName} className="videoGridItem">
                             <button
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
+                                onClick={() => handleClick(videoFileName)}
+                                className="videoThumbnailButton"
                             >
-                                Previous
-                            </button>
-                            <span> Page {currentPage} of {totalPages} </span>
-                            <button
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                            >
-                                Next
-                            </button>
-                        </div>
-                    </React.Fragment>
-                </div>
-                <div className="videoPlayerContainer">
-                    {selectedVideoFile && (
-                        <>
-                            <div className="videoInfoBar">
-                                <span className="videoFileName">{selectedVideoFile}</span>
-                                <button
-                                    onClick={() => handleDelete(selectedVideoFile)}
-                                    className="deleteButton"
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                            <div className="videoPlayer">
-                                <VideoPlayer
-                                    videoFileName={selectedVideoFile}
+                                <VideoPreviewer
+                                    videoFileName={videoFileName}
                                     token={cookies.token}
                                 />
-                            </div>
-                        </>
-                    )}
+                                <span className="videoFileName">{videoFileName}</span>
+                            </button>
+                            <button
+                                onClick={() => handleDelete(videoFileName)}
+                                className="deleteButton"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    ))}
+                </div>
+                <div className="pagination">
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                    >
+                        Previous
+                    </button>
+                    <span> Page {currentPage} of {totalPages} </span>
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                    >
+                        Next
+                    </button>
                 </div>
             </div>
+            {isModalOpen && (
+                <Modal
+                    isOpen={isModalOpen}
+                    onRequestClose={() => setIsModalOpen(false)}
+                    contentLabel="Video Player"
+                    className="videoModal"
+                    overlayClassName="videoModalOverlay"
+                >
+                    <div className="modalContent">
+                        <button className="closeButton" onClick={() => setIsModalOpen(false)}>
+                            Close
+                        </button>
+                        <video
+                            src={`${SERVER_URL}/api/video/${selectedVideoFile}?token=${cookies.token}`}
+                            controls
+                            autoPlay
+                        />
+                    </div>
+                </Modal>
+            )}
         </div>
     );
 }

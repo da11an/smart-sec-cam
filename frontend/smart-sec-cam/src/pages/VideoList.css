@@ -1,11 +1,3 @@
-/* Root container styles */
-.VideoList {
-    background-color: white;
-    min-height: 100vh;
-    min-width: 100vw;
-    font-family: Arial, sans-serif;
-}
-
 /* Video container layout */
 .videoContainer {
     display: flex;
@@ -22,15 +14,6 @@
     background-color: #000;
 }
 
-/* Sidebar list styles */
-.videoList {
-    width: 25%;
-    max-height: 99vh;
-    overflow-y: auto; /* Allow scrolling for the list */
-    padding: 10px;
-    background-color: #292929;
-}
-
 /* Remove bullet points from list items */
 .videoList ul {
     list-style-type: none;
@@ -41,22 +24,6 @@
 /* Individual list items */
 .videoList li {
     margin-bottom: 15px;
-}
-
-/* Video button container */
-.videoThumbnailButton {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px;
-    background-color: #383838;
-    border: 1px solid #444;
-    border-radius: 8px;
-    cursor: pointer;
-    color: #fff;
-    text-align: center;
-    transition: transform 0.2s, background-color 0.3s;
-    overflow: hidden;
 }
 
 .videoThumbnailButton:hover {
@@ -166,6 +133,66 @@
     border-radius: 4px 4px 0 0;
 }
 
+.VideoList {
+    display: flex;
+    flex-direction: column;
+    background-color: #1c1c1c;
+    min-height: 100vh;
+}
+
+.videoGridContainer {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.videoGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+}
+
+.videoGridItem {
+    position: relative;
+    text-align: center;
+}
+
+.videoThumbnailButton {
+    background-color: #383838;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+}
+
+/* Video button container
+.videoThumbnailButton {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    background-color: #383838;
+    border: 1px solid #444;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #fff;
+    text-align: center;
+    transition: transform 0.2s, background-color 0.3s;
+    overflow: hidden;
+} */
+
+.videoFileName {
+    display: block;
+    margin-top: 8px;
+    color: white;
+    font-size: 14px;
+}
+
 .deleteButton {
     background-color: #f44336;
     color: white;
@@ -173,17 +200,44 @@
     border-radius: 4px;
     padding: 5px 10px;
     cursor: pointer;
-    font-size: 12px;
-    transition: background-color 0.2s ease;
+    margin-top: 5px;
 }
 
 .deleteButton:hover {
     background-color: #d32f2f;
 }
 
-.videoFileName {
-    font-weight: bold;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.videoModal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 800px;
+    width: 100%;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.videoModalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.closeButton {
+    background-color: #444;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.closeButton:hover {
+    background-color: #222;
 }
