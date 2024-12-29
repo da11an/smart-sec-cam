@@ -58,7 +58,7 @@ export default function Login(props) {
     React.useEffect(() => {
         if (token != null && hasValidToken) {
             // Navigate to video stream page
-            navigate('/stream', {state: { token: token }});
+            navigate('/live', {state: { token: token }});
         }
     }, [token])
 
@@ -123,7 +123,7 @@ export default function Login(props) {
             // Write token to cookie
             setCookie("token", data["token"], {path: "/"})
             // Navigate to App page,
-            navigate('/stream');
+            navigate('/live');
         }
         else {
             // TODO: Show error message on UI somewhere

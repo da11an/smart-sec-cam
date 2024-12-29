@@ -158,17 +158,7 @@ export default function VideoList(props) {
 
     return (
         <div className="VideoList">
-            <NavBar />
-            <div className="toggleEditingMode">
-                <label>
-                    <input
-                        type="checkbox"
-                        checked={editingMode}
-                        onChange={(e) => setEditingMode(e.target.checked)}
-                    />
-                    Editing Mode
-                </label>
-            </div>
+            <NavBar onEditingModeChange={(isEditing) => setEditingMode(isEditing)} />
             <div className="videoGridContainer">
                 <div className="videoGrid">
                     {paginatedItems.map((videoFileName) => (

@@ -17,7 +17,7 @@ ReactDOM.render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="stream" element={<App />} />
+        <Route path="live" element={<App />} />
         <Route path="videos" element={<VideoList />} />
         <Route path="register" element={<Register />} />
       </Routes>

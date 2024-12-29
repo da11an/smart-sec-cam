@@ -9,6 +9,8 @@ import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import MenuIcon from '@mui/icons-material/Menu';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 const darkTheme = createTheme({
@@ -26,6 +28,7 @@ const darkTheme = createTheme({
 export default function ButtonAppBar(props) {
     const navigate = useNavigate();
     const [anchorEl, setAnchorEl] = useState(null);
+    const [editingMode, setEditingMode] = useState(false); // State for editing mode toggle
 
     // Handlers for the menu
     const handleMenuOpen = (event) => {
@@ -39,6 +42,11 @@ export default function ButtonAppBar(props) {
     const goToPage = (path) => {
         navigate(path, { state: { token: props.token } });
         handleMenuClose();
+    };
+
+    const toggleEditingMode = (event) => {
+        setEditingMode(event.target.checked);
+        props.onEditingModeChange(event.target.checked); // Notify parent component
     };
 
     return (
@@ -72,8 +80,21 @@ export default function ButtonAppBar(props) {
                             open={Boolean(anchorEl)}
                             onClose={handleMenuClose}
                         >
+                            <MenuItem onClick={() => goToPage('/live')}>Live</MenuItem>
                             <MenuItem onClick={() => goToPage('/videos')}>Videos</MenuItem>
-                            <MenuItem onClick={() => goToPage('/stream')}>Stream</MenuItem>
+                            
+                            <MenuItem>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={editingMode}
+                                            onChange={toggleEditingMode}
+                                            color="secondary"
+                                        />
+                                    }
+                                    label="Editing Mode"
+                                />
+                            </MenuItem>
                         </Menu>
 
                         {/* App Title */}
