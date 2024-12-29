@@ -1,10 +1,9 @@
-import React from "react";
-
-import { DateTime } from "luxon";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { isIOS } from "react-device-detect";
 import { useCookies } from "react-cookie";
 import Modal from "react-modal";
+import { DateTime } from "luxon";
 
 import { VideoPreviewer } from "../components/VideoComponents";
 import NavBar from "../components/NavBar";
@@ -46,6 +45,7 @@ export default function VideoList(props) {
     const [hasValidToken, setHasValidToken] = React.useState(null);
     const [tokenTTL, setTokenTTL] = React.useState(null);
     const [cookies] = useCookies(["token"]);
+    const [editingMode, setEditingMode] = useState(false); // New state for editing mode
     const navigate = useNavigate();
 
     const [currentPage, setCurrentPage] = React.useState(1);
@@ -159,6 +159,16 @@ export default function VideoList(props) {
     return (
         <div className="VideoList">
             <NavBar />
+            <div className="toggleEditingMode">
+                <label>
+                    <input
+                        type="checkbox"
+                        checked={editingMode}
+                        onChange={(e) => setEditingMode(e.target.checked)}
+                    />
+                    Editing Mode
+                </label>
+            </div>
             <div className="videoGridContainer">
                 <div className="videoGrid">
                     {paginatedItems.map((videoFileName) => (
@@ -188,7 +198,8 @@ export default function VideoList(props) {
                                     </div>
                                 </button>
                             </div>
-                            <div className="actionButtons">
+                            {editingMode && ( // Conditionally render the action buttons
+                                <div className="actionButtons">
                                 <span className="videoDuration">
                                     {videoDurations[videoFileName]
                                         ? formatDuration(videoDurations[videoFileName])
@@ -199,15 +210,16 @@ export default function VideoList(props) {
                                     className="downloadButton"
                                     download
                                 >
-                                    Download
+                                        Download
                                 </a>
-                                <button
+                                    <button
                                     onClick={() => handleDelete(videoFileName)}
-                                    className="deleteButton"
-                                >
-                                    Delete
-                                </button>
-                            </div>
+                                        className="deleteButton"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

@@ -327,3 +327,14 @@ video {
     font-size: 14px;
     color: #aaa; /* Slightly dimmer than the date */
 }
+
+.toggleEditingMode {
+    margin: 10px;
+    padding: 5px;
+    text-align: left;
+    font-size: 16px;
+}
+
+.toggleEditingMode input[type="checkbox"] {
+    margin-right: 5px;
+}
