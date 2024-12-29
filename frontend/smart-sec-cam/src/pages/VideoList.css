@@ -262,3 +262,11 @@ video {
 .downloadButton:hover {
     background-color: #3746ad;
 }
+
+.videoDuration {
+    display: block;
+    margin-top: 5px;
+    color: #aaa;
+    font-size: 12px;
+    text-align: center;
+}

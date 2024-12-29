@@ -18,8 +18,15 @@ const DELETE_VIDEO_ENDPOINT = "/api/video";
 
 Modal.setAppElement("#root");
 
+function formatDuration(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
+}
+
 export default function VideoList(props) {
     const [videoFileNames, setVideoFileNames] = React.useState([]);
+    const [videoDurations, setVideoDurations] = React.useState({});
     const [selectedVideoFile, setSelectedVideoFile] = React.useState(null);
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [hasValidToken, setHasValidToken] = React.useState(null);
@@ -86,6 +93,13 @@ export default function VideoList(props) {
         setVideoFileNames(videoList);
     }
 
+    function handleMetadataLoaded(videoFileName, duration) {
+        setVideoDurations((prevDurations) => ({
+            ...prevDurations,
+            [videoFileName]: duration,
+        }));
+    }
+
     function handleClick(videoFileName) {
         setSelectedVideoFile(videoFileName);
         setIsModalOpen(true);
@@ -104,6 +118,11 @@ export default function VideoList(props) {
             .then((resp) => {
                 if (resp.ok) {
                     setVideoFileNames((prev) => prev.filter((name) => name !== videoFileName));
+                    setVideoDurations((prev) => {
+                        const newDurations = { ...prev };
+                        delete newDurations[videoFileName];
+                        return newDurations;
+                    });
                 } else {
                     console.error("Failed to delete video:", resp.statusText);
                 }
@@ -137,10 +156,18 @@ export default function VideoList(props) {
                                 <VideoPreviewer
                                     videoFileName={videoFileName}
                                     token={cookies.token}
+                                    onMetadataLoaded={(duration) =>
+                                        handleMetadataLoaded(videoFileName, duration)
+                                    }
                                 />
                                 <span className="videoFileName">{videoFileName}</span>
                             </button>
                             <div className="actionButtons">
+                                <span className="videoDuration">
+                                    {videoDurations[videoFileName]
+                                        ? formatDuration(videoDurations[videoFileName])
+                                        : "Loading..."}
+                                </span>
                                 <a
                                     href={`${SERVER_URL}/api/video/${videoFileName}?token=${cookies.token}`}
                                     className="downloadButton"
@@ -154,7 +181,6 @@ export default function VideoList(props) {
                                 >
                                     Delete
                                 </button>
-
                             </div>
                         </div>
                     ))}

@@ -17,18 +17,24 @@ export function VideoPlayer(props) {
     );
 }
 
-export function VideoPreviewer({ videoFileName, token }) {
+export function VideoPreviewer({ videoFileName, token, onMetadataLoaded }) {
     const videoUrl = `${SERVER_URL}${VIDEO_ENDPOINT}${videoFileName}?token=${token}`;
+
+    const handleMetadata = (e) => {
+        if (onMetadataLoaded) {
+            onMetadataLoaded(e.target.duration);
+        }
+    };
 
     return (
         <video
             className="videoThumbnail"
+            src={videoUrl}
             muted
             loop
             autoPlay
-            playsInline
+            onLoadedMetadata={handleMetadata}
         >
-            <source src={videoUrl} type="video/webm" />
             Your browser does not support the video tag.
         </video>
     );
