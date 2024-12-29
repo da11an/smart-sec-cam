@@ -214,6 +214,20 @@
     border-bottom: 1px solid #333;
 }
 
+.modalVideoName {
+    flex-grow: 1;
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    margin-right: 20px;
+}
+
+.modalVideoDuration {
+    font-size: 14px;
+    color: #aaa;
+    margin-right: 20px;
+}
+
 video {
     max-width: 100%;
     max-height: 100%;
