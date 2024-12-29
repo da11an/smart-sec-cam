@@ -223,7 +223,10 @@ export default function VideoList(props) {
                             Download
                         </a>
                         <button
-                            onClick={() => handleDelete(selectedVideoFile)}
+                            onClick={() => {
+                                handleDelete(selectedVideoFile);
+                                setIsModalOpen(false);
+                            }}
                             className="deleteButton"
                         >
                             Delete
