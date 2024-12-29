@@ -176,7 +176,15 @@ export default function VideoList(props) {
                                         }
                                     />
                                     <div className="thumbnailOverlay">
-                                        {extractDateTimeFromFilename(videoFileName)}
+                                        <div className="thumbnailText">
+                                            <span className="videoDate">{extractDateTimeFromFilename(videoFileName)}</span>
+                                            <br />
+                                            <span className="videoDuration">
+                                                {videoDurations[videoFileName]
+                                                    ? formatDuration(videoDurations[videoFileName])
+                                                    : "Loading..."}
+                                            </span>
+                                        </div>
                                     </div>
                                 </button>
                             </div>
@@ -228,7 +236,7 @@ export default function VideoList(props) {
                     overlayClassName="videoModalOverlay"
                 >
                     <div className="modalInfoBar">
-                        <span className="modalVideoName">{selectedVideoFile}</span>
+                        <span className="modalVideoDate">{extractDateTimeFromFilename(selectedVideoFile)}</span>                    
                         <span className="modalVideoDuration">
                             {videoDurations[selectedVideoFile]
                                 ? formatDuration(videoDurations[selectedVideoFile])

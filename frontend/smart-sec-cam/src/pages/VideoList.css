@@ -214,7 +214,7 @@
     border-bottom: 1px solid #333;
 }
 
-.modalVideoName {
+.modalVideoDate {
     flex-grow: 1;
     font-size: 16px;
     font-weight: bold;
@@ -293,17 +293,37 @@ video {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0.8); /* Darker overlay */
     color: white;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: flex-end; /* Align items to the bottom */
+    align-items: center; /* Center-align horizontally */
     font-size: 14px;
     font-weight: bold;
     opacity: 0;
     transition: opacity 0.3s ease;
+    padding: 10px; /* Add spacing from the edges */
+    text-align: center;
+    border-radius: 5px; /* Optional: Rounded edges */
 }
 
 .videoThumbnailButton:hover .thumbnailOverlay {
     opacity: 1;
+}
+
+.thumbnailText {
+    width: 100%;
+    text-align: center; /* Align text horizontally */
+    margin-bottom: 5px; /* Add spacing from the bottom edge */
+}
+
+.videoDate {
+    font-size: 16px;
+    color: #ddd; /* Slightly lighter for readability */
+    margin-bottom: 5px; /* Add spacing between date and duration */
+}
+
+.videoDuration {
+    font-size: 14px;
+    color: #aaa; /* Slightly dimmer than the date */
 }
