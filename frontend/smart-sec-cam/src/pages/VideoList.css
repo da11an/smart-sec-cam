@@ -273,3 +273,37 @@ video {
     font-size: 12px;
     text-align: center;
 }
+
+.videoThumbnailContainer {
+    position: relative;
+}
+
+.videoThumbnailButton {
+    position: relative;
+    display: block;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.thumbnailOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.videoThumbnailButton:hover .thumbnailOverlay {
+    opacity: 1;
+}

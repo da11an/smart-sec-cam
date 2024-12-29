@@ -1,4 +1,6 @@
 import React from "react";
+
+import { DateTime } from "luxon";
 import { useNavigate } from "react-router-dom";
 import { isIOS } from "react-device-detect";
 import { useCookies } from "react-cookie";
@@ -22,6 +24,18 @@ function formatDuration(seconds) {
     const minutes = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
+}
+
+function extractDateTimeFromFilename(filename) {
+    const match = filename.match(/__(\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2})/);
+    if (match) {
+        const utcTime = DateTime.fromFormat(match[1], "yyyy-MM-dd_HH:mm:ss", {
+            zone: "utc",
+        });
+        const localTime = utcTime.setZone("America/Chicago");
+        return localTime.toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS);
+    }
+    return "Unknown Date/Time";
 }
 
 export default function VideoList(props) {
@@ -149,18 +163,23 @@ export default function VideoList(props) {
                 <div className="videoGrid">
                     {paginatedItems.map((videoFileName) => (
                         <div key={videoFileName} className="videoGridItem">
-                            <button
-                                onClick={() => handleClick(videoFileName)}
-                                className="videoThumbnailButton"
-                            >
-                                <VideoPreviewer
-                                    videoFileName={videoFileName}
-                                    token={cookies.token}
-                                    onMetadataLoaded={(duration) =>
-                                        handleMetadataLoaded(videoFileName, duration)
-                                    }
-                                />
-                            </button>
+                            <div className="videoThumbnailContainer">
+                                <button
+                                    onClick={() => handleClick(videoFileName)}
+                                    className="videoThumbnailButton"
+                                >
+                                    <VideoPreviewer
+                                        videoFileName={videoFileName}
+                                        token={cookies.token}
+                                        onMetadataLoaded={(duration) =>
+                                            handleMetadataLoaded(videoFileName, duration)
+                                        }
+                                    />
+                                    <div className="thumbnailOverlay">
+                                        {extractDateTimeFromFilename(videoFileName)}
+                                    </div>
+                                </button>
+                            </div>
                             <div className="actionButtons">
                                 <span className="videoDuration">
                                     {videoDurations[videoFileName]
