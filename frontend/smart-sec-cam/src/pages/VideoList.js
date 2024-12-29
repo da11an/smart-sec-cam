@@ -14,7 +14,7 @@ import "./VideoList.css";
 
 const SERVER_URL = "https://localhost:8443";
 const VIDEOS_ENDPOINT = "/api/video/video-list";
-const DELETE_VIDEO_ENDPOINT = "/api/video/delete";
+const DELETE_VIDEO_ENDPOINT = "/api/video";
 
 Modal.setAppElement("#root");
 
@@ -140,12 +140,22 @@ export default function VideoList(props) {
                                 />
                                 <span className="videoFileName">{videoFileName}</span>
                             </button>
-                            <button
-                                onClick={() => handleDelete(videoFileName)}
-                                className="deleteButton"
-                            >
-                                Delete
-                            </button>
+                            <div className="actionButtons">
+                                <a
+                                    href={`${SERVER_URL}/api/video/${videoFileName}?token=${cookies.token}`}
+                                    className="downloadButton"
+                                    download
+                                >
+                                    Download
+                                </a>
+                                <button
+                                    onClick={() => handleDelete(videoFileName)}
+                                    className="deleteButton"
+                                >
+                                    Delete
+                                </button>
+
+                            </div>
                         </div>
                     ))}
                 </div>
