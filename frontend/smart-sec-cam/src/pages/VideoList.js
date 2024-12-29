@@ -209,7 +209,14 @@ export default function VideoList(props) {
                     className="videoModal"
                     overlayClassName="videoModalOverlay"
                 >
-                    <div className="modalTopBar">
+                    <div className="modalContent">
+                        <video
+                            src={`${SERVER_URL}/api/video/${selectedVideoFile}?token=${cookies.token}`}
+                            controls
+                            autoPlay
+                        />
+                    </div>
+                    <div className="modalInfoBar">
                         <span className="modalVideoDuration">
                             {videoDurations[selectedVideoFile]
                                 ? formatDuration(videoDurations[selectedVideoFile])
@@ -234,13 +241,6 @@ export default function VideoList(props) {
                         <button className="closeButton" onClick={() => setIsModalOpen(false)}>
                             Close
                         </button>
-                    </div>
-                    <div className="modalContent">
-                        <video
-                            src={`${SERVER_URL}/api/video/${selectedVideoFile}?token=${cookies.token}`}
-                            controls
-                            autoPlay
-                        />
                     </div>
                 </Modal>
             )}
