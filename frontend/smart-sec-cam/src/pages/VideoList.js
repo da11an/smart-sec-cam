@@ -201,7 +201,7 @@ export default function VideoList(props) {
                     </button>
                 </div>
             </div>
-            {isModalOpen && (
+            {isModalOpen && selectedVideoFile && (
                 <Modal
                     isOpen={isModalOpen}
                     onRequestClose={() => setIsModalOpen(false)}
@@ -209,10 +209,30 @@ export default function VideoList(props) {
                     className="videoModal"
                     overlayClassName="videoModalOverlay"
                 >
-                    <div className="modalContent">
+                    <div className="modalTopBar">
+                        <span className="modalVideoDuration">
+                            {videoDurations[selectedVideoFile]
+                                ? formatDuration(videoDurations[selectedVideoFile])
+                                : "Loading..."}
+                        </span>
+                        <a
+                            href={`${SERVER_URL}/api/video/${selectedVideoFile}?token=${cookies.token}`}
+                            className="downloadButton"
+                            download
+                        >
+                            Download
+                        </a>
+                        <button
+                            onClick={() => handleDelete(selectedVideoFile)}
+                            className="deleteButton"
+                        >
+                            Delete
+                        </button>
                         <button className="closeButton" onClick={() => setIsModalOpen(false)}>
                             Close
                         </button>
+                    </div>
+                    <div className="modalContent">
                         <video
                             src={`${SERVER_URL}/api/video/${selectedVideoFile}?token=${cookies.token}`}
                             controls

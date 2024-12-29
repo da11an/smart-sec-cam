@@ -122,17 +122,6 @@
     margin-top: 10px;
 }
 
-.videoInfoBar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px 10px;
-    background-color: #292929;
-    color: white;
-    font-size: 14px;
-    border-radius: 4px 4px 0 0;
-}
-
 .VideoList {
     display: flex;
     flex-direction: column;
@@ -215,23 +204,20 @@
     align-items: center;
 }
 
+.modalTopBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #1c1c1c;
+    color: white;
+    border-bottom: 1px solid #333;
+}
+
 video {
     max-width: 100%;
     max-height: 100%;
     border-radius: 8px;
-}
-
-.closeButton {
-    background-color: #444;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-    margin-bottom: 10px;
-}
-
-.closeButton:hover {
-    background-color: #502f2f;
 }
 
 .actionButtons {
@@ -240,7 +226,7 @@ video {
     margin-top: 10px;
 }
 
-.deleteButton, .downloadButton {
+.deleteButton, .downloadButton, .closeButton {
     padding: 5px 10px;
     font-size: 14px;
     border: none;
@@ -249,21 +235,18 @@ video {
     text-align: center;
     text-decoration: none; /* Ensures the download button doesn't appear as a link */
     display: inline-block;
-}
-
-.deleteButton {
     background-color: #1c1c1c;
     color: white;
+}
+
+.closeButton:hover {
+    background-color: #502f2f;
 }
 
 .deleteButton:hover {
     background-color: #ce3434;
 }
 
-.downloadButton {
-    background-color: #1c1c1c;
-    color: white;
-}
 
 .downloadButton:hover {
     background-color: #3746ad;
