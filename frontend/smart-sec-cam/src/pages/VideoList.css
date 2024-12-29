@@ -70,39 +70,59 @@
 /* Pagination styles */
 .pagination {
     display: flex;
-    justify-content: center;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
     margin-top: 10px;
-    padding: 10px 0;
-    background-color: #292929;
+    gap: 10px; /* Space between pagination items */
 }
 
 .pagination button {
-    padding: 5px 12px;
-    border: 1px solid #444;
-    border-radius: 4px;
-    background-color: #383838;
-    color: #fff;
+    padding: 8px 12px;
+    border: 1px solid #555; /* Subtle border for better visibility */
+    background-color: #333; /* Dark background for buttons */
+    color: white;
     cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
+    border-radius: 4px; /* Slightly rounded edges */
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .pagination button:hover {
-    background-color: #4a4a4a;
-    transform: scale(1.05);
+    background-color: #555; /* Slightly lighter on hover */
+}
+
+.pagination button.activePage {
+    background-color: #1976d2; /* Highlight active page with primary color */
+    color: white;
+    font-weight: bold;
 }
 
 .pagination button:disabled {
-    background-color: #444;
-    color: #777;
+    background-color: #222; /* Dimmed background for disabled buttons */
+    color: #777; /* Subtle color for disabled text */
     cursor: not-allowed;
-    transform: none;
 }
 
-.pagination span {
-    font-size: 14px;
-    color: #ccc;
+.jumpToPage {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+    color: white; /* Text color for label */
+}
+
+.jumpToPage input {
+    width: 60px;
+    margin-left: 5px;
+    padding: 5px;
+    border: 1px solid #555;
+    background-color: #222;
+    color: white;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.jumpToPage input:focus {
+    border-color: #1976d2; /* Highlight on focus */
 }
 
 /* Navbar styles */

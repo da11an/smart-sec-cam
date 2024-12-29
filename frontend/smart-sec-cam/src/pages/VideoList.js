@@ -47,7 +47,7 @@ export default function VideoList(props) {
     const [cookies] = useCookies(["token"]);
     const [editingMode, setEditingMode] = useState(false); // New state for editing mode
     const navigate = useNavigate();
-
+    const [jumpToPage, setJumpToPage] = React.useState("");
     const [currentPage, setCurrentPage] = React.useState(1);
     const itemsPerPage = 12;
 
@@ -215,18 +215,60 @@ export default function VideoList(props) {
                 </div>
                 <div className="pagination">
                     <button
+                        onClick={() => handlePageChange(1)}
+                        disabled={currentPage === 1}
+                    >
+                        First
+                    </button>
+                    <button
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
                     >
                         Previous
                     </button>
-                    <span> Page {currentPage} of {totalPages} </span>
+                    {/* Page Range Links */}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter((page) => Math.abs(page - currentPage) <= 2) // Show pages around the current one
+                        .map((page) => (
+                            <button
+                                key={page}
+                                onClick={() => handlePageChange(page)}
+                                disabled={page === currentPage}
+                                className={page === currentPage ? "activePage" : ""}
+                            >
+                                {page}
+                            </button>
+                        ))}
                     <button
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
                     >
                         Next
                     </button>
+                    <button
+                        onClick={() => handlePageChange(totalPages)}
+                        disabled={currentPage === totalPages}
+                    >
+                        Last
+                    </button>
+
+                    {/* Jump to Page */}
+                    <div className="jumpToPage">
+                        <label htmlFor="jumpTo">Jump to:</label>
+                        <input
+                            id="jumpTo"
+                            type="number"
+                            min="1"
+                            max={totalPages}
+                            value={jumpToPage}
+                            onChange={(e) => setJumpToPage(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    handlePageChange(Number(jumpToPage));
+                                }
+                            }}
+                        />
+                    </div>
                 </div>
             </div>
             {isModalOpen && selectedVideoFile && (
