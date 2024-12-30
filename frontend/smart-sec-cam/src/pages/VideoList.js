@@ -15,6 +15,7 @@ import { validateToken } from "../utils/ValidateToken";
 import { getTokenTTL } from "../utils/GetTokenTTL";
 import { refreshToken } from "../utils/RefreshToken";
 import "./VideoList.css";
+import { useSocket } from "../context/SocketContext";
 
 const SERVER_URL = "https://localhost:8443";
 const VIDEOS_ENDPOINT = "/api/video/video-list";
@@ -55,6 +56,7 @@ export default function VideoList(props) {
     const navigate = useNavigate();
     const [jumpToPage, setJumpToPage] = React.useState("");
     const [currentPage, setCurrentPage] = React.useState(1);
+    const socket = useSocket();
     const itemsPerPage = 12;
 
     React.useEffect(() => {
