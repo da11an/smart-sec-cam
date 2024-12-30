@@ -5,23 +5,18 @@ from threading import Thread
 
 import redis.exceptions
 
-from camera import UsbCamera, RPiCamera
+from camera import Camera, webcam720p
 from smart_sec_cam.redis import RedisImageSender
-
 
 shutdown = False
 
 
 class Streamer:
-    def __init__(self, server_address: str, server_port: int, capture_delay: float = 0.1, camera_port: int = 0,
-                 use_pi_camera: bool = False, image_rotation: int = 0):
+    def __init__(self, server_address: str, server_port: int, capture_delay: float = 0.1,
+                 camera: Camera = None):
+        assert camera is not None, "Camera object must be provided"
         self.cap_delay = capture_delay
-        if use_pi_camera:
-            print('Attempting to use RPiCamera...')
-            self.camera = RPiCamera(image_rotation=image_rotation)
-        else:
-            print('Attempting to use UsbCamera...')
-            self.camera = UsbCamera(camera_port, image_rotation=image_rotation)
+        self.camera = camera
         # Image data queues
         self.image_queue = queue.Queue(maxsize=int(5.0/capture_delay))  # Only queue 5 seconds of video
         # Image sending client
@@ -68,16 +63,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--redis-url', help='Server address to stream images to', default='localhost')
     parser.add_argument('--redis-port', help='Server port to stream images to', default=6380)
-    parser.add_argument('--pi-cam', help="Use Raspberry Pi camera module", action='store_true')
-    parser.add_argument('--rotation', help="Angle to rotate image to", type=int, default=0)
     parser.add_argument('--capture-delay', help="Delay between capturing a new frame", default=0.1)
+    parser.add_argument('--cam-class', help="Choose a defined Camera class from camera.py", default='WebCam720p')
     args = parser.parse_args()
     # Setup streamer and start threads
-    streamer = Streamer(args.redis_url,
-                        args.redis_port,
-                        use_pi_camera=args.pi_cam,
-                        image_rotation=args.rotation,
-                        capture_delay=args.capture_delay)
+    if args.cam_class == 'WebCam720p':
+        streamer = Streamer(args.redis_url, args.redis_port, args.capture_delay, webcam720p)
+    else:
+        raise ValueError(f"Invalid camera class: {args.cam_class}. Add a new camera class to camera.py and streamer.py.")
+    
     captureThread = Thread(target=streamer.capture_images)
     senderThread = Thread(target=streamer.send_images)
     captureThread.start()

@@ -6,25 +6,20 @@ from typing import Tuple
 import cv2
 
 
-res_640 = (640, 480)
-res_1080p = (1920, 1080)
-res_writer = res_640
-
 class VideoWriter:
     FILENAME_DELIM = "__"
 
     def __init__(self, channel: str, path="data/videos/",
-                 resolution: Tuple[int, int] = res_writer,
                  file_types: list[str] = ["webm"]):
         self.channel = channel
         self.video_dir = path
         self.full_filepath = None
         self._make_target_dir(path)
-        self.resolution = resolution
         self.frame_buffer = []
         self.first_frame_time = None
         self.last_frame_time = None
         self.file_types = file_types
+        self.resolution = None  # Resolution is determined dynamically
 
     @staticmethod
     def _make_target_dir(path: str):
@@ -32,41 +27,42 @@ class VideoWriter:
             os.makedirs(path)
 
     def add_frame(self, frame, timestamp):
-        resized_frame = cv2.resize(frame, self.resolution)
         if self.first_frame_time is None:
             self.first_frame_time = timestamp
+            # Set resolution dynamically from the first frame
+            self.resolution = (frame.shape[1], frame.shape[0])  # (width, height)
         else:
             self.last_frame_time = timestamp
-        self.frame_buffer.append(resized_frame)
+        self.frame_buffer.append(frame)
 
     def write(self):
+        if not self.resolution:
+            raise RuntimeError("No frames added to determine resolution.")
+        
         self._generate_file_name()
         print("Writing video to: " + self.full_filepath + " ...")
         fps = self._calculate_fps()
+        
         if 'webm' in self.file_types:
-            # Write to .webm
-            webm_file = self.full_filepath + ".webm"
-            fourcc = cv2.VideoWriter_fourcc(*'VP90')
-            writer = cv2.VideoWriter(webm_file, fourcc, fps, self.resolution)
-            for frame in self.frame_buffer:
-                writer.write(frame)
-            writer.release()
-            del writer
+            self._write_video("webm", 'VP90', fps)
         if 'mp4' in self.file_types:
-            # Write to .mp4
-            mp4_file = self.full_filepath + ".mp4"
-            fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-            writer = cv2.VideoWriter(mp4_file, fourcc, fps, self.resolution)
-            for frame in self.frame_buffer:
-                writer.write(frame)
-            writer.release()
-            del writer
+            self._write_video("mp4", 'mp4v', fps)
+        
         self._clear_frame_buffer()
+
+    def _write_video(self, file_type: str, codec: str, fps: int):
+        file_path = f"{self.full_filepath}.{file_type}"
+        fourcc = cv2.VideoWriter_fourcc(*codec)
+        writer = cv2.VideoWriter(file_path, fourcc, fps, self.resolution)
+        for frame in self.frame_buffer:
+            writer.write(frame)
+        writer.release()
 
     def reset(self):
         self._clear_frame_buffer()
         self.first_frame_time = None
         self.last_frame_time = None
+        self.resolution = None  # Reset resolution
 
     def _clear_frame_buffer(self):
         self.frame_buffer = []
@@ -82,23 +78,7 @@ class VideoWriter:
         return int(len(self.frame_buffer) / elapsed_time)
 
     def _monotonic_to_datetime(self, monotonic_timestamp):
-        """
-        Converts a given time.monotonic() value to an estimated datetime.datetime.
-
-        Parameters:
-        monotonic_timestamp (float): The earlier time.monotonic() value to be converted.
-
-        Returns:
-        datetime.datetime: The estimated datetime corresponding to the given monotonic timestamp.
-        """
-        # Capture the current monotonic and datetime reference points
         monotonic_ref = time.monotonic()
         datetime_ref = datetime.datetime.now()
-
-        # Calculate the elapsed time between the input monotonic timestamp and the reference
         elapsed = monotonic_ref - monotonic_timestamp
-
-        # Estimate the corresponding datetime
-        estimated_datetime = datetime_ref - datetime.timedelta(seconds=elapsed)
-
-        return estimated_datetime
+        return datetime_ref - datetime.timedelta(seconds=elapsed)

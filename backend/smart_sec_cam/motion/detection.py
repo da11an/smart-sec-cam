@@ -9,6 +9,7 @@ import imutils
 import numpy as np
 
 from smart_sec_cam.video.writer import VideoWriter
+from smart_sec_cam.streamer.camera import webcam720p
 
 
 class MotionDetector:

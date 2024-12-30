@@ -1,16 +1,28 @@
+from abc import ABC, abstractmethod
 from typing import Tuple
 
 import cv2
 import numpy as np
+# from picamera import PiCamera # install prior to use
 
 
-res_1080p = (1080, 1920)
-res_720p = (720, 1280)
-res_640 = (640, 480)
-res_usb = res_720p
+class Camera(ABC):
+    """Abstract base class for camera implementations."""
+    
+    @abstractmethod
+    def capture_image(self) -> bytes:
+        """Capture an image and return it as JPEG bytes."""
+        pass
 
-class UsbCamera:
-    def __init__(self, usb_port: int = 0, resolution: Tuple[int, int] = res_usb, jpeg_quality: int = 70,
+    @abstractmethod
+    def close(self):
+        """Release the camera resources."""
+        pass
+
+
+class UsbCamera(Camera):
+    """Generic USB camera class"""
+    def __init__(self, usb_port: int = 0, resolution: Tuple[int, int] = (640, 480), jpeg_quality: int = 70,
                  image_rotation: int = 0):
         self.usb_port = usb_port
         self.resolution = resolution
@@ -19,7 +31,7 @@ class UsbCamera:
         self._set_resolution()
         self.image_rotation = image_rotation
 
-    def capture_image(self):
+    def capture_image(self) -> bytes:
         ret, frame = self.camera.read()
         if not ret:
             raise RuntimeError('Failed to capture image - check camera port value')
@@ -48,16 +60,15 @@ class UsbCamera:
             return frame
 
 
-class RPiCamera:
-    def __init__(self, resolution: Tuple[int, int] = res_640, jpeg_quality: int = 70, image_rotation: int = 0):
-        from picamera import PiCamera  # Only import picamera at runtime, since it won't install on other systems
-
+class RPiCamera(Camera):
+    """Raspberry Pi camera class"""
+    def __init__(self, resolution: Tuple[int, int] = (640, 480), jpeg_quality: int = 70, image_rotation: int = 0):
         self.encode_params = [int(cv2.IMWRITE_JPEG_QUALITY), jpeg_quality]
         self.camera = PiCamera()
         self._set_resolution(resolution)
         self._set_rotation(image_rotation)
 
-    def capture_image(self):
+    def capture_image(self) -> bytes:
         frame = np.empty((self.camera.resolution[1], self.camera.resolution[0], 3), dtype=np.uint8)
         self.camera.capture(frame, format='bgr', use_video_port=True)
         processed_image_data = (cv2.imencode('.jpeg', frame, self.encode_params)[1]).tobytes()
@@ -72,3 +83,11 @@ class RPiCamera:
     def _set_rotation(self, rotation: int):
         self.camera.rotation = rotation
 
+
+class WebCam720p(UsbCamera):
+    """720p USB camera class"""
+    def __init__(self, usb_port: int = 0, jpeg_quality: int = 70, image_rotation: int = 0):
+        super().__init__(usb_port=usb_port, resolution=(720, 1280), jpeg_quality=jpeg_quality, image_rotation=image_rotation)
+
+
+webcam720p = WebCam720p(usb_port=0, jpeg_quality=70, image_rotation=0)
