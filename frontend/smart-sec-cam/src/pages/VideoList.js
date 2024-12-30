@@ -1,3 +1,5 @@
+import io from "socket.io-client"
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { isIOS } from "react-device-detect";
@@ -5,6 +7,7 @@ import { useCookies } from "react-cookie";
 import Modal from "react-modal";
 import { DateTime } from "luxon";
 
+import ImageViewer from "../components/ImageViewer";
 import { VideoPreviewer } from "../components/VideoComponents";
 import NavBar from "../components/NavBar";
 
@@ -15,7 +18,9 @@ import "./VideoList.css";
 
 const SERVER_URL = "https://localhost:8443";
 const VIDEOS_ENDPOINT = "/api/video/video-list";
+const ROOMS_ENDPOINT = "/api/video/rooms";
 const DELETE_VIDEO_ENDPOINT = "/api/video";
+const socket = io(SERVER_URL);
 
 Modal.setAppElement("#root");
 
@@ -34,7 +39,7 @@ function extractDateTimeFromFilename(filename) {
         const localTime = utcTime.setZone("America/Chicago");
         return localTime.toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS);
     }
-    return "Unknown Date/Time";
+    return filename;
 }
 
 export default function VideoList(props) {
@@ -42,6 +47,7 @@ export default function VideoList(props) {
     const [videoDurations, setVideoDurations] = React.useState({});
     const [selectedVideoFile, setSelectedVideoFile] = React.useState(null);
     const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [rooms, setRooms] = useState([]); // Live rooms
     const [hasValidToken, setHasValidToken] = React.useState(null);
     const [tokenTTL, setTokenTTL] = React.useState(null);
     const [cookies] = useCookies(["token"]);
@@ -81,6 +87,11 @@ export default function VideoList(props) {
             fetch(requestUrl, requestOptions)
                 .then((resp) => resp.json())
                 .then((data) => setVideoList(data["videos"]));
+
+            // Fetch live rooms
+            fetch(`${SERVER_URL}${ROOMS_ENDPOINT}`, requestOptions)
+                .then((resp) => resp.json())
+                .then((data) => setRooms(Object.keys(data["rooms"])));
         } else if (hasValidToken === false) {
             navigate("/", {});
         }
@@ -137,15 +148,17 @@ export default function VideoList(props) {
                         delete newDurations[videoFileName];
                         return newDurations;
                     });
-                } else {
-                    console.error("Failed to delete video:", resp.statusText);
                 }
             })
             .catch((error) => console.error("Error deleting video:", error));
     }
 
-    const totalPages = Math.ceil(videoFileNames.length / itemsPerPage);
-    const paginatedItems = videoFileNames.slice(
+    // Combine live streams with videos
+    const combinedItems = [...rooms, ...videoFileNames];
+
+    // Calculate pagination based on combined items
+    const totalPages = Math.ceil(combinedItems.length / itemsPerPage);
+    const paginatedItems = combinedItems.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
@@ -161,57 +174,71 @@ export default function VideoList(props) {
             <NavBar onEditingModeChange={(isEditing) => setEditingMode(isEditing)} />
             <div className="videoGridContainer">
                 <div className="videoGrid">
-                    {paginatedItems.map((videoFileName) => (
-                        <div key={videoFileName} className="videoGridItem">
-                            <div className="videoThumbnailContainer">
+                    {paginatedItems.map((item) =>
+                        rooms.includes(item) ? (
+                            // Render live streams
+                            <div key={item} className="videoGridItem liveFeed">
                                 <button
-                                    onClick={() => handleClick(videoFileName)}
+                                    onClick={() => handleClick(item)}
                                     className="videoThumbnailButton"
                                 >
-                                    <VideoPreviewer
-                                        videoFileName={videoFileName}
-                                        token={cookies.token}
-                                        onMetadataLoaded={(duration) =>
-                                            handleMetadataLoaded(videoFileName, duration)
-                                        }
-                                    />
-                                    <div className="thumbnailOverlay">
-                                        <div className="thumbnailText">
-                                            <span className="videoDate">{extractDateTimeFromFilename(videoFileName)}</span>
-                                            <br />
-                                            <span className="videoDuration">
-                                                {videoDurations[videoFileName]
-                                                    ? formatDuration(videoDurations[videoFileName])
-                                                    : "Loading..."}
-                                            </span>
-                                        </div>
-                                    </div>
+                                    <ImageViewer room={item} />
+                                    <div className="thumbnailOverlay">Live: {item}</div>
                                 </button>
                             </div>
-                            {editingMode && ( // Conditionally render the action buttons
-                                <div className="actionButtons">
-                                <span className="videoDuration">
-                                    {videoDurations[videoFileName]
-                                        ? formatDuration(videoDurations[videoFileName])
-                                        : "Loading..."}
-                                </span>
-                                <a
-                                    href={`${SERVER_URL}/api/video/${videoFileName}?token=${cookies.token}`}
-                                    className="downloadButton"
-                                    download
-                                >
-                                        Download
-                                </a>
+                        ) : (
+                            // Render video thumbnails
+                            <div key={item} className="videoGridItem">
+                                <div className="videoThumbnailContainer">
                                     <button
-                                    onClick={() => handleDelete(videoFileName)}
-                                        className="deleteButton"
+                                        onClick={() => handleClick(item)}
+                                        className="videoThumbnailButton"
                                     >
-                                        Delete
+                                        <VideoPreviewer
+                                            videoFileName={item}
+                                            token={cookies.token}
+                                            onMetadataLoaded={(duration) =>
+                                                handleMetadataLoaded(item, duration)
+                                            }
+                                        />
+                                        <div className="thumbnailOverlay">
+                                            <div className="thumbnailText">
+                                                <span className="videoDate">{extractDateTimeFromFilename(item)}</span>
+                                                <br />
+                                                <span className="videoDuration">
+                                                    {videoDurations[item]
+                                                        ? formatDuration(videoDurations[item])
+                                                        : "Loading..."}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </button>
                                 </div>
-                            )}
-                        </div>
-                    ))}
+                                {editingMode && (
+                                    <div className="actionButtons">
+                                        <span className="videoDuration">
+                                            {videoDurations[item]
+                                                ? formatDuration(videoDurations[item])
+                                                : "Loading..."}
+                                        </span>
+                                        <a
+                                            href={`${SERVER_URL}/api/video/${item}?token=${cookies.token}`}
+                                            className="downloadButton"
+                                            download
+                                        >
+                                            Download
+                                        </a>
+                                        <button
+                                            onClick={() => handleDelete(item)}
+                                            className="deleteButton"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    )}
                 </div>
                 <div className="pagination">
                     <button
@@ -306,12 +333,16 @@ export default function VideoList(props) {
                             Close
                         </button>
                     </div>
-                    <div className="modalContent">
-                        <video
-                            src={`${SERVER_URL}/api/video/${selectedVideoFile}?token=${cookies.token}`}
-                            controls
-                            autoPlay
-                        />
+                    <div className={`modalContent ${rooms.includes(selectedVideoFile) ? "liveFeedModal" : ""}`}>
+                        {rooms.includes(selectedVideoFile) ? (
+                            <ImageViewer room={selectedVideoFile} />
+                        ) : (
+                            <video
+                                src={`${SERVER_URL}/api/video/${selectedVideoFile}?token=${cookies.token}`}
+                                controls
+                                autoPlay
+                            />
+                        )}
                     </div>
                 </Modal>
             )}
