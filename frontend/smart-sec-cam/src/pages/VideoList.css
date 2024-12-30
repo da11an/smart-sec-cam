@@ -193,7 +193,7 @@
     transform: translate(-50%, -50%);
     background: #1c1c1c; /* Dark background for the modal */
     border-radius: 8px;
-    padding: 20px;
+    padding: 10px;
     max-width: 90%; /* Use up to 90% of the screen width */
     max-height: 90%; /* Use up to 90% of the screen height */
     width: 800px; /* Default width */
@@ -368,8 +368,8 @@ video {
 
 /* Highlight live feed modal with a green outline */
 .modalContent.liveFeedModal {
-    border: 4px solid green;
+    border: 2px solid green;
     border-radius: 8px;
-    padding: 10px;
-    box-shadow: 0 0 10px green;
+    padding: 5px;
+    box-shadow: 0 0 5px green;
 }
