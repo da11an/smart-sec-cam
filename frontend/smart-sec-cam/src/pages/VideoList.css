@@ -162,15 +162,22 @@
 
 .videoGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Flexible grid layout */
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Default: flexible layout */
     gap: 20px;
     width: 100%;
     max-width: 1200px;
 }
 
-.videoGridItem {
-    position: relative;
-    text-align: center;
+@media (min-width: 768px) {
+    .videoGrid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Slightly larger for medium screens */
+    }
+}
+
+@media (min-width: 1200px) {
+    .videoGrid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Larger thumbnails for larger screens */
+    }
 }
 
 .videoThumbnailButton {
@@ -180,6 +187,28 @@
     border-radius: 8px;
     cursor: pointer;
     width: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease; /* Add hover effect */
+}
+
+.videoThumbnailButton:hover {
+    transform: scale(1.05); /* Slightly enlarge on hover */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Add shadow on hover */
+}
+
+.videoThumbnailButton video {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+.thumbnailOverlay {
+    font-size: 14px; /* Adjust text size to match thumbnail size */
+    padding: 10px;
+}
+
+.videoGridItem {
+    position: relative;
+    text-align: center;
 }
 
 .videoFileName {
@@ -328,10 +357,6 @@ video {
     padding: 10px; /* Add spacing from the edges */
     text-align: center;
     border-radius: 5px; /* Optional: Rounded edges */
-}
-
-.videoThumbnailButton:hover .thumbnailOverlay {
-    opacity: 1;
 }
 
 .thumbnailText {
