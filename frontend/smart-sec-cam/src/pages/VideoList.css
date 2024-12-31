@@ -70,20 +70,23 @@
 /* Pagination styles */
 .pagination {
     display: flex;
+    flex-wrap: wrap; /* Allow wrapping for small screens */
     align-items: center;
     justify-content: center;
     margin-top: 10px;
-    gap: 10px; /* Space between pagination items */
+    gap: 10px;
 }
 
 .pagination button {
     padding: 8px 12px;
-    border: 1px solid #555; /* Subtle border for better visibility */
-    background-color: #333; /* Dark background for buttons */
+    border: 1px solid #555;
+    background-color: #333;
     color: white;
     cursor: pointer;
-    border-radius: 4px; /* Slightly rounded edges */
+    border-radius: 4px;
     transition: background-color 0.2s ease, color 0.2s ease;
+    flex: 1; /* Allow buttons to resize for better fit */
+    max-width: 100px; /* Prevent buttons from becoming too wide */
 }
 
 .pagination button:hover {
@@ -105,7 +108,8 @@
 .jumpToPage {
     display: flex;
     align-items: center;
-    margin-left: 10px;
+    margin: 10px 0; /* Adjust spacing for smaller screens */
+    flex-wrap: wrap; /* Ensure inputs wrap on small screens */
     color: white; /* Text color for label */
 }
 
@@ -124,7 +128,6 @@
 .jumpToPage input:focus {
     border-color: #1976d2; /* Highlight on focus */
 }
-
 /* Navbar styles */
 .NavBar {
     width: 100%;
@@ -159,7 +162,7 @@
 
 .videoGrid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Flexible grid layout */
     gap: 20px;
     width: 100%;
     max-width: 1200px;
