@@ -1,189 +1,161 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
 import { useCookies } from 'react-cookie';
 
 import { validateToken } from "../utils/ValidateToken";
 
-import "./Login.css"
+import "./Login.css";
 
-
-const SERVER_URL = "https://localhost:8443"
-const AUTH_ENDPOINT = "/api/auth/login"
-const NUM_USERS_ENDPOINT = "/api/auth/num-users"
-const REFRESH_TOKEN_ENDPOINT = "/api/token/refresh"
-
+const SERVER_URL = "https://localhost:8443";
+const AUTH_ENDPOINT = "/api/auth/login";
+const NUM_USERS_ENDPOINT = "/api/auth/num-users";
+const REFRESH_TOKEN_ENDPOINT = "/api/token/refresh";
 
 export default function Login(props) {
-    const [username, setUsername] = React.useState("");
-    const [password, setPassword] = React.useState("");
-    const [token, setToken] = React.useState("");
-    const [hasRegisteredUser, setHasRegisteredUser] = React.useState(null);
-    const [hasValidToken, setHasValidToken] = React.useState(null);
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [token, setToken] = useState("");
+    const [hasRegisteredUser, setHasRegisteredUser] = useState(null);
+    const [hasValidToken, setHasValidToken] = useState(null);
+    const [loginError, setLoginError] = useState("");
+    const [loading, setLoading] = useState(false);
     const [cookies, setCookie] = useCookies(["token"]);
     const navigate = useNavigate();
 
-    React.useEffect(() => {
+    useEffect(() => {
         checkServerHasUser();
     }, []);
 
+    useEffect(() => {
+        if (hasRegisteredUser == null) return;
 
-    React.useEffect(() => {
-        if (hasRegisteredUser == null) {
-            return;
-        }
         if (hasRegisteredUser) {
-            // Check cookies to see if we have a JWT. If so, auto-redirect to video stream page
             const cachedToken = cookies.token;
-            // Validate token
             validateToken(cachedToken, setHasValidToken);
-        }
-        else if (hasRegisteredUser === false) {
+        } else if (hasRegisteredUser === false) {
             navigate('/register');
         }
     }, [hasRegisteredUser]);
 
-    React.useEffect(() => {
-        const cachedToken = cookies.token;
-        if (cachedToken != null && hasValidToken) {
-            // Refresh token
-            refreshToken(cachedToken);
+    useEffect(() => {
+        if (cookies.token && hasValidToken) {
+            refreshToken(cookies.token);
         }
-    }, [hasValidToken])
+    }, [hasValidToken]);
 
-    React.useEffect(() => {
-        if (token != null && hasValidToken) {
-            // Navigate to video stream page
-            navigate('/live', {state: { token: token }});
+    useEffect(() => {
+        if (token && hasValidToken) {
+            navigate('/live', { state: { token } });
         }
-    }, [token])
+    }, [token]);
 
     function checkServerHasUser() {
         const url = SERVER_URL + NUM_USERS_ENDPOINT;
         fetch(url)
-            .then(response => response.json())
-            .then(data => handleCheckServerHasUserResponse(data)); 
-    }
-
-    function handleCheckServerHasUserResponse(data) {
-        setHasRegisteredUser(data["users"] > 0)
+            .then((response) => response.json())
+            .then((data) => setHasRegisteredUser(data["users"] > 0))
+            .catch((error) => setLoginError("Failed to check server for users."));
     }
 
     function refreshToken(token) {
         const url = SERVER_URL + REFRESH_TOKEN_ENDPOINT;
-        const payload = {
-            "token": token
-        }
+        const payload = { token };
         const requestOptions = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
         };
-        fetch(url, requestOptions)
-            .then(response => response.json())
-            .then(data => handleRefreshTokenResponse(data)); 
-    }
 
-    function handleRefreshTokenResponse(data){
-        if (data.status === "OK") {
-            setToken(data["token"]);
-            // Write token to cookie
-            setCookie("token", data["token"], {path: "/"})
-        }
-        else {
-            // TODO: Show error message on UI somewhere
-            console.log("Token refresh failed");
-        }
+        fetch(url, requestOptions)
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.status === "OK") {
+                    setToken(data["token"]);
+                    setCookie("token", data["token"], { path: "/" });
+                } else {
+                    console.log("Token refresh failed");
+                }
+            });
     }
 
     function handleLogin() {
-        // Submit username and password
+        setLoading(true);
+        setLoginError("");
+
         const url = SERVER_URL + AUTH_ENDPOINT;
-        const payload = {
-            "username": username,
-            "password": password,
-        }
+        const payload = { username, password };
         const requestOptions = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
         };
-        fetch(url, requestOptions)
-        .then(response => response.json())
-        .then(data => handleLoginResponse(data));        
-    };
 
-    function handleLoginResponse(data) {
-        if (data.status === "OK") {
-            setToken(data["token"]);
-            // Write token to cookie
-            setCookie("token", data["token"], {path: "/"})
-            // Navigate to App page,
-            navigate('/live');
-        }
-        else {
-            // TODO: Show error message on UI somewhere
-            console.log("Login failed")
-        }
+        fetch(url, requestOptions)
+            .then((response) => response.json())
+            .then((data) => {
+                setLoading(false);
+                if (data.status === "OK") {
+                    setToken(data["token"]);
+                    setCookie("token", data["token"], { path: "/" });
+                    navigate('/live');
+                } else {
+                    setLoginError("Invalid username or password.");
+                }
+            })
+            .catch(() => {
+                setLoading(false);
+                setLoginError("Unable to reach the server. Please try again later.");
+            });
     }
 
     return (
         <div className="Login">
             <Box
-                component="form"
                 sx={{
                     '& > :not(style)': { m: 1, width: '100%', paddingTop: '30vh', paddingBottom: '2vh' },
                 }}
-                noValidate
-                autoComplete="off"
                 display="flex"
                 justifyContent="center"
                 alignItems="center"
                 flexDirection="column"
             >
-                <Typography variant="h4" align="center" gutterBottom component="div">
+                <Typography variant="h4" align="center" gutterBottom>
                     Smart Sec Cam
                 </Typography>
             </Box>
             <Box
-                component="form"
                 sx={{
                     '& > :not(style)': { m: 1, width: '100%', padding: '10' },
                 }}
-                noValidate
-                autoComplete="off"
                 display="flex"
                 justifyContent="center"
                 alignItems="center"
                 flexDirection="column"
-            >  
-                <Typography variant="h5" align="center" gutterBottom component="div">
+            >
+                <Typography variant="h5" align="center" gutterBottom>
                     Login
                 </Typography>
+
+                {loginError && <Alert severity="error" sx={{ maxWidth: '240px' }}>{loginError}</Alert>}
+
                 <TextField
                     required
                     id="username"
                     label="Username"
                     value={username}
-                    onChange={event => setUsername(event.target.value)}
+                    onChange={(e) => setUsername(e.target.value)}
                     sx={{
-                        maxWidth: '240px', 
-                        minWidth: '120px', 
-                        '& .MuiInputBase-input': {
-                            color: 'white',
-                        },
-                        '& .MuiOutlinedInput-root': {
-                            '& fieldset': {
-                              borderColor: 'white',
-                            }
-                        },
-                        "& .MuiInputLabel-root": {
-                            color: "white"
-                        }
+                        maxWidth: '240px',
+                        '& .MuiInputBase-input': { color: 'white' },
+                        '& .MuiOutlinedInput-root fieldset': { borderColor: 'white' },
+                        "& .MuiInputLabel-root": { color: "white" },
                     }}
                 />
                 <TextField
@@ -192,25 +164,24 @@ export default function Login(props) {
                     type="password"
                     label="Password"
                     value={password}
-                    onChange={event => setPassword(event.target.value)}
-                    onKeyPress={event => {if (event.key === 'Enter') {handleLogin()}}}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
                     sx={{
-                        maxWidth: '240px', 
-                        minWidth: '120px', 
-                        '& .MuiInputBase-input': {
-                            color: 'white',
-                        },
-                        '& .MuiOutlinedInput-root': {
-                            '& fieldset': {
-                              borderColor: 'white',
-                            }
-                        },
-                        "& .MuiInputLabel-root": {
-                            color: "white"
-                        }
+                        maxWidth: '240px',
+                        '& .MuiInputBase-input': { color: 'white' },
+                        '& .MuiOutlinedInput-root fieldset': { borderColor: 'white' },
+                        "& .MuiInputLabel-root": { color: "white" },
                     }}
                 />
-                <Button variant="contained" style={{maxWidth: '180px', maxHeight: '60px', minWidth: '50px', minHeight: '40px'}} onClick={() => handleLogin()}>Login</Button>
+
+                <Button
+                    variant="contained"
+                    sx={{ maxWidth: '180px', maxHeight: '60px', minWidth: '50px', minHeight: '40px' }}
+                    onClick={handleLogin}
+                    disabled={loading}
+                >
+                    {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : "Login"}
+                </Button>
             </Box>
         </div>
     );
