@@ -14,7 +14,8 @@ import './App.css';
 import io from "socket.io-client";
 import { refreshToken } from "./utils/RefreshToken";
 
-const SERVER_URL = "https://localhost:8443"
+import SERVER_URL from './config';
+
 const ROOMS_ENDPOINT = "/api/video/rooms"
 let socket = io(SERVER_URL)
 

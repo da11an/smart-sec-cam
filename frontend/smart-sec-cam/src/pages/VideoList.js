@@ -15,8 +15,8 @@ import { validateToken } from "../utils/ValidateToken";
 import { getTokenTTL } from "../utils/GetTokenTTL";
 import { refreshToken } from "../utils/RefreshToken";
 import "./VideoList.css";
+import SERVER_URL from '../config';
 
-const SERVER_URL = "https://localhost:8443";
 const VIDEOS_ENDPOINT = "/api/video/video-list";
 const ROOMS_ENDPOINT = "/api/video/rooms";
 const DELETE_VIDEO_ENDPOINT = "/api/video";

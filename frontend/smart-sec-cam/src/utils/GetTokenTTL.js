@@ -1,4 +1,5 @@
-const SERVER_URL = "https://localhost:8443"
+import SERVER_URL from '../config';
+
 const TOKEN_TTL_ENDPOINT = "/api/token/ttl"
 
 

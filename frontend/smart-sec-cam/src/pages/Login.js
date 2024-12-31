@@ -12,8 +12,8 @@ import { useCookies } from 'react-cookie';
 import { validateToken } from "../utils/ValidateToken";
 
 import "./Login.css";
+import SERVER_URL from '../config';
 
-const SERVER_URL = "https://localhost:8443";
 const AUTH_ENDPOINT = "/api/auth/login";
 const NUM_USERS_ENDPOINT = "/api/auth/num-users";
 const REFRESH_TOKEN_ENDPOINT = "/api/token/refresh";

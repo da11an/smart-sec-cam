@@ -1,6 +1,6 @@
 import ReactPlayer from 'react-player'
+import SERVER_URL from '../config';
 
-const SERVER_URL = "https://localhost:8443"
 const VIDEO_ENDPOINT = "/api/video/"
 
 export function VideoPlayer(props) {

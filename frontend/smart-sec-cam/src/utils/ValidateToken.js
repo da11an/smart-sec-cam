@@ -1,4 +1,5 @@
-const SERVER_URL = "https://localhost:8443"
+import SERVER_URL from '../config';
+
 const VALIDATE_TOKEN_ENDPOINT = "/api/token/validate"
 
 

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import io from "socket.io-client";
-
-const SERVER_URL = "https://localhost:8443";
+import SERVER_URL from '../config';
 
 export default function ImageViewer({ room }) {
     const [srcBlob, setSrcBlob] = useState(null);

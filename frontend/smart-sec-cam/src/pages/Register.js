@@ -7,8 +7,8 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
 import "./Register.css"
+import SERVER_URL from '../config';
 
-const SERVER_URL = "https://localhost:8443"
 const REGISTER_ENDPOINT = "/api/auth/register"
 
 
