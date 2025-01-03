@@ -2,7 +2,7 @@ import queue
 import threading
 import time
 from typing import List
-from math import pow
+from math import pow, dist
 
 import cv2
 import imutils
@@ -17,6 +17,9 @@ class MotionDetector:
                  video_dir: str = "data/videos", initial_frame_sample_rate: int = 2):
         self.channel_name = channel_name
         self.motion_threshold = motion_threshold
+        self.principal_contour_centroids = []
+        self.false_alarm = True
+        self.cumulative_motion_threshold = 50  # pixels
         self.video_duration = video_duration_seconds
         self.video_dir = video_dir
         self.video_writer = VideoWriter(self.channel_name, path=self.video_dir)
@@ -86,7 +89,8 @@ class MotionDetector:
     def _adjust_sample_rate(self):
         """Dynamically adjust frame sampling rate based on queue size."""
         self.frame_sample_rate = max(round(pow(self.frame_queue.qsize(), 0.2)), 1)
-        print(f"Queue size {self.frame_queue.qsize()}; setting sampling rate to {self.frame_sample_rate}")
+        if self.frame_queue.qsize() > 1:
+            print(f"Queue size {self.frame_queue.qsize()}; setting sampling rate to {self.frame_sample_rate}")
 
     def _get_decoded_frame_tuple(self):
         new_frame = self.frame_queue.get()
@@ -106,10 +110,36 @@ class MotionDetector:
         contours = cv2.findContours(threshold.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = imutils.grab_contours(contours)
         # Iterate over contours and determine if any are large enough to count as motion
-        for contour in contours:
-            if cv2.contourArea(contour) >= self.motion_threshold:
-                return True
-        return False
+        largest_contour, largest_area = max(
+            ((contour, cv2.contourArea(contour)) for contour in contours),
+            key=lambda x: x[1],
+            default=(None, 0)
+        )
+        if largest_area > self.motion_threshold:
+            if self.false_alarm is True:
+                M = cv2.moments(largest_contour)
+                if M["m00"] != 0:
+                    cX = int(M["m10"] / M["m00"])
+                    cY = int(M["m01"] / M["m00"])
+                    self.principal_contour_centroids.append((cX, cY))
+                    if len(self.principal_contour_centroids) > 1:
+                        self._check_max_distance_to_set_false_alarm()
+            return True
+        else:
+            return False
+
+    def _check_max_distance_to_set_false_alarm(self):
+        """
+        Check if the maximum distance between any two points in a list exceeds the given threshold.
+        """
+        if len(self.principal_contour_centroids) > 1:
+            points = self.principal_contour_centroids
+            threshold = self.cumulative_motion_threshold
+            for i in range(len(points)):
+                for j in range(i + 1, len(points)):
+                    if dist(points[i], points[j]) > threshold:
+                        self.false_alarm = False
+                        return
 
     def _draw_motion_areas_on_frame(self, old_frame, new_frame):
         if old_frame is None:
@@ -133,9 +163,15 @@ class MotionDetector:
                 cv2.rectangle(modified_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
         return modified_frame
 
+    def reset_tracking(self):
+        """Reset contour tracking and false alarm status."""
+        self.principal_contour_centroids = []
+        self.false_alarm = True
+
     def _record_video(self, first_frames: List, first_frames_greyscale: List, timestamp):
         start_time = time.monotonic()
         self.video_writer.reset()
+        self.reset_tracking()
         old_frame = None
         frame_counter = 0
 
@@ -148,7 +184,7 @@ class MotionDetector:
 
         # Process frames until recording duration is complete
         motionless_frames = 0
-        while not self._recording_timeout(start_time) and motionless_frames < 20:
+        while not self._recording_timeout() and motionless_frames < 20:
             if self._has_decoded_frame():
                 new_frame, new_grey, timestamp = self._get_decoded_frame_tuple()
                 # new_frame = self._draw_motion_areas_on_frame(old_frame, new_frame)
@@ -164,10 +200,14 @@ class MotionDetector:
             else:
                 time.sleep(0.001)
 
-        # Finalize video
-        self.video_writer.write()
+        # Finalize video if not a false alarm (no motion)
+        if self.false_alarm is False:
+            self.video_writer.write()
+            print(f"Video recording complete for channel: {self.channel_name}")
+        else:
+            print("False alarm detected; discarding video")
 
-    def _recording_timeout(self, start_time: float) -> bool:
+    def _recording_timeout(self) -> bool:
         if self.video_writer.last_frame_time is None:
             return False
         else:
