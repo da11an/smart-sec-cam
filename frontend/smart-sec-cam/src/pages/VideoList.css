@@ -1,76 +1,123 @@
-/* Video container layout */
-.videoContainer {
-    display: flex;
-    flex-direction: row;
+/* General Styles */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
     background-color: #1c1c1c;
     color: #fff;
-    overflow: hidden;
 }
 
-/* Video player styles */
-.videoPlayer {
-    width: 75%;
+/* Video container layout */
+.videoContainer, .VideoList {
+    display: flex;
+    flex-direction: column;
+    background-color: #1c1c1c;
+    min-height: 100vh;
+}
+
+/* Navbar styles */
+.NavBar {
+    width: 100%;
+    background-color: #292929;
     padding: 10px;
-    background-color: #000;
+    color: #fff;
+    font-size: 16px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-/* Remove bullet points from list items */
-.videoList ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
+/* Video grid container */
+.videoGridContainer {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
 }
 
-/* Individual list items */
-.videoList li {
-    margin-bottom: 15px;
+.videoGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+}
+
+@media (min-width: 768px) {
+    .videoGrid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}
+
+@media (min-width: 1200px) {
+    .videoGrid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+}
+
+.videoGridItem {
+    position: relative;
+    text-align: center;
+}
+
+
+/* Thumbnail Buttons */
+.videoThumbnailButton {
+    background-color: #383838;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .videoThumbnailButton:hover {
     background-color: #4a4a4a;
-    transform: scale(1.02);
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .videoThumbnailButton:active {
     transform: scale(0.98);
 }
 
-/* Thumbnail preview */
-.videoThumbnailButton video {
+.videoThumbnailButton video, .videoThumbnailButton img {
     width: 100%;
     height: auto;
     border-radius: 4px;
 }
 
-.videoWrapper {
-    width: 100%;
-    max-height: 100px;
-    overflow: hidden;
-    border-radius: 4px;
+/* Thumbnail overlay and info bar */
+.thumbnailOverlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.7); /* Shadow overlay */
+    color: white;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    background-color: black; /* Fallback background */
-}
-
-.videoThumbnail {
-    width: 100%;
-    height: auto;
-    object-fit: cover;
-}
-
-/* Filename styling */
-.videoThumbnailButton .videoFileName {
-    margin-top: 8px;
     font-size: 14px;
     font-weight: bold;
-    color: #ccc;
+    padding: 5px 10px;
+    text-align: left;
+    border-radius: 0 0 4px 4px;
+    transition: opacity 0.3s ease; /* Smooth fade-out effect */
+    opacity: 1; /* Fully visible by default */
+}
+
+/* On hover, hide the overlay */
+.videoThumbnailButton:hover .thumbnailOverlay {
+    opacity: 0; /* Fully hidden */
+    transition: opacity 0.3s ease; /* Smooth fade-out effect */
 }
 
 /* Pagination styles */
 .pagination {
     display: flex;
-    flex-wrap: wrap; /* Allow wrapping for small screens */
+    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     margin-top: 10px;
@@ -85,32 +132,33 @@
     cursor: pointer;
     border-radius: 4px;
     transition: background-color 0.2s ease, color 0.2s ease;
-    flex: 1; /* Allow buttons to resize for better fit */
-    max-width: 100px; /* Prevent buttons from becoming too wide */
+    flex: 1;
+    max-width: 100px;
 }
 
 .pagination button:hover {
-    background-color: #555; /* Slightly lighter on hover */
+    background-color: #555;
 }
 
 .pagination button.activePage {
-    background-color: #1976d2; /* Highlight active page with primary color */
+    background-color: #1976d2;
     color: white;
     font-weight: bold;
 }
 
 .pagination button:disabled {
-    background-color: #222; /* Dimmed background for disabled buttons */
-    color: #777; /* Subtle color for disabled text */
+    background-color: #222;
+    color: #777;
     cursor: not-allowed;
 }
 
+/* Jump to Page */
 .jumpToPage {
     display: flex;
     align-items: center;
-    margin: 10px 0; /* Adjust spacing for smaller screens */
-    flex-wrap: wrap; /* Ensure inputs wrap on small screens */
-    color: white; /* Text color for label */
+    margin: 10px 0;
+    flex-wrap: wrap;
+    color: white;
 }
 
 .jumpToPage input {
@@ -126,110 +174,22 @@
 }
 
 .jumpToPage input:focus {
-    border-color: #1976d2; /* Highlight on focus */
-}
-/* Navbar styles */
-.NavBar {
-    width: 100%;
-    background-color: #292929;
-    padding: 10px;
-    color: #fff;
-    font-size: 16px;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    border-color: #1976d2;
 }
 
-.videoPlayerContainer {
-    display: flex;
-    flex-direction: column;
-    margin-top: 10px;
-}
-
-.VideoList {
-    display: flex;
-    flex-direction: column;
-    background-color: #1c1c1c;
-    min-height: 100vh;
-}
-
-.videoGridContainer {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-}
-
-.videoGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Default: flexible layout */
-    gap: 20px;
-    width: 100%;
-    max-width: 1200px;
-}
-
-@media (min-width: 768px) {
-    .videoGrid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Slightly larger for medium screens */
-    }
-}
-
-@media (min-width: 1200px) {
-    .videoGrid {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Larger thumbnails for larger screens */
-    }
-}
-
-.videoThumbnailButton {
-    background-color: #383838;
-    border: none;
-    padding: 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    width: 100%;
-    transition: transform 0.2s ease, box-shadow 0.2s ease; /* Add hover effect */
-}
-
-.videoThumbnailButton:hover {
-    transform: scale(1.05); /* Slightly enlarge on hover */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Add shadow on hover */
-}
-
-.videoThumbnailButton video {
-    width: 100%;
-    height: auto;
-    border-radius: 4px;
-}
-
-.thumbnailOverlay {
-    font-size: 14px; /* Adjust text size to match thumbnail size */
-    padding: 10px;
-}
-
-.videoGridItem {
-    position: relative;
-    text-align: center;
-}
-
-.videoFileName {
-    display: block;
-    margin-top: 8px;
-    color: white;
-    font-size: 14px;
-}
-
+/* Modal Styles */
 .videoModal {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #1c1c1c; /* Dark background for the modal */
+    background: #1c1c1c;
     border-radius: 8px;
     padding: 10px;
-    max-width: 90%; /* Use up to 90% of the screen width */
-    max-height: 90%; /* Use up to 90% of the screen height */
-    width: 800px; /* Default width */
-    height: auto; /* Adjust height dynamically based on content */
+    max-width: 90%;
+    max-height: 90%;
+    width: 800px;
+    height: auto;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     overflow: hidden;
     display: flex;
@@ -244,7 +204,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.85); /* Darker overlay for better contrast */
+    background: rgba(0, 0, 0, 0.85);
 }
 
 .modalContent {
@@ -256,36 +216,7 @@
     align-items: center;
 }
 
-.modalInfoBar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    background-color: #1c1c1c;
-    color: white;
-    border-bottom: 1px solid #333;
-}
-
-.modalVideoDate {
-    flex-grow: 1;
-    font-size: 16px;
-    font-weight: bold;
-    color: #fff;
-    margin-right: 20px;
-}
-
-.modalVideoDuration {
-    font-size: 14px;
-    color: #aaa;
-    margin-right: 20px;
-}
-
-video {
-    max-width: 100%;
-    max-height: 100%;
-    border-radius: 8px;
-}
-
+/* Action Buttons */
 .actionButtons {
     display: flex;
     gap: 10px;
@@ -299,7 +230,7 @@ video {
     border-radius: 4px;
     cursor: pointer;
     text-align: center;
-    text-decoration: none; /* Ensures the download button doesn't appear as a link */
+    text-decoration: none;
     display: inline-block;
     background-color: #1c1c1c;
     color: white;
@@ -313,88 +244,17 @@ video {
     background-color: #ce3434;
 }
 
-
 .downloadButton:hover {
     background-color: #3746ad;
 }
 
-.videoDuration {
-    display: block;
-    margin-top: 5px;
-    color: #aaa;
-    font-size: 12px;
-    text-align: center;
-}
-
-.videoThumbnailContainer {
-    position: relative;
-}
-
-.videoThumbnailButton {
-    position: relative;
-    display: block;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-}
-
-.thumbnailOverlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.8); /* Darker overlay */
-    color: white;
-    display: flex;
-    justify-content: flex-end; /* Align items to the bottom */
-    align-items: center; /* Center-align horizontally */
-    font-size: 14px;
-    font-weight: bold;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    padding: 10px; /* Add spacing from the edges */
-    text-align: center;
-    border-radius: 5px; /* Optional: Rounded edges */
-}
-
-.thumbnailText {
-    width: 100%;
-    text-align: center; /* Align text horizontally */
-    margin-bottom: 5px; /* Add spacing from the bottom edge */
-}
-
-.videoDate {
-    font-size: 16px;
-    color: #ddd; /* Slightly lighter for readability */
-    margin-bottom: 5px; /* Add spacing between date and duration */
-}
-
-.videoDuration {
-    font-size: 14px;
-    color: #aaa; /* Slightly dimmer than the date */
-}
-
-.toggleEditingMode {
-    margin: 10px;
-    padding: 5px;
-    text-align: left;
-    font-size: 16px;
-}
-
-.toggleEditingMode input[type="checkbox"] {
-    margin-right: 5px;
-}
-
-/* Highlight live feed thumbnails with a green border */
+/* Highlight live feed */
 .videoGridItem.liveFeed {
     border: 2px solid green;
     border-radius: 4px;
     padding: 2px;
 }
 
-/* Highlight live feed modal with a green outline */
 .modalContent.liveFeedModal {
     border: 2px solid green;
     border-radius: 8px;
