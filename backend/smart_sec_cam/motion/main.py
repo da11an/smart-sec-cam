@@ -18,7 +18,7 @@ def main(redis_url: str, redis_port: int, video_dir: str, motion_threshold: int)
     image_receiver.set_channels(active_channels)
     image_receiver.start_listener_thread()
     # Create and start MotionDetection instance for each channel
-    motion_detectors = {channel: MotionDetector(channel, motion_threshold=motion_threshold, video_dir=video_dir)
+    motion_detectors = {channel: MotionDetector(channel, motion_area_threshold=motion_threshold, video_dir=video_dir)
                         for channel in active_channels}
     for detector in motion_detectors.values():
         detector.run_in_background()
@@ -41,7 +41,7 @@ def main(redis_url: str, redis_port: int, video_dir: str, motion_threshold: int)
                     print(f"Detected new channel: {channel}")
                     new_channels.append(channel)
                     motion_detectors[channel] = MotionDetector(channel,
-                                                               motion_threshold=motion_threshold,
+                                                               motion_area_threshold=motion_threshold,
                                                                video_dir=video_dir)
             # Check for removed channels
             removed_channels = []
