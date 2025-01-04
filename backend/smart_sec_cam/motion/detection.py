@@ -2,7 +2,7 @@ import queue
 import threading
 import time
 from typing import List
-from math import pow, dist
+from math import ceil, dist
 
 import cv2
 import imutils
@@ -13,13 +13,20 @@ from smart_sec_cam.streamer.camera import webcam720p
 
 
 class MotionDetector:
-    def __init__(self, channel_name: str, motion_threshold: int = 10000, video_duration_seconds: int = 60,
-                 video_dir: str = "data/videos", initial_frame_sample_rate: int = 2):
+    def __init__(
+        self,
+        channel_name: str,
+        motion_area_threshold: int = 2500, # px^2
+        cumulative_motion_threshold: int = 50, # px
+        video_duration_seconds: int = 60,
+        video_dir: str = "data/videos",
+        initial_frame_sample_rate: int = 2
+    ):
         self.channel_name = channel_name
-        self.motion_threshold = motion_threshold
+        self.motion_area_threshold = motion_area_threshold
         self.principal_contour_centroids = []
         self.false_alarm = True
-        self.cumulative_motion_threshold = 50  # pixels
+        self.cumulative_motion_threshold = cumulative_motion_threshold # pixels
         self.video_duration = video_duration_seconds
         self.video_dir = video_dir
         self.video_writer = VideoWriter(self.channel_name, path=self.video_dir)
@@ -56,7 +63,7 @@ class MotionDetector:
                 if self.frame_count % self.frame_sample_rate == 0:
                     decoded_frame, decoded_grey, timestamp = self._get_decoded_frame_tuple()
                     if last_frame is not None:
-                        if self._detect_motion(last_frame_greyscale, decoded_grey):
+                        if self._detect_motion(last_frame_greyscale, decoded_grey, track_path=False):
                             print(f"Detected motion for channel: {self.channel_name}")
                             self._record_video(
                                 [last_frame, decoded_frame],
@@ -88,16 +95,20 @@ class MotionDetector:
 
     def _adjust_sample_rate(self):
         """Dynamically adjust frame sampling rate based on queue size."""
-        self.frame_sample_rate = max(round(pow(self.frame_queue.qsize(), 0.2)), 1)
-        if self.frame_queue.qsize() > 1:
-            print(f"Queue size {self.frame_queue.qsize()}; setting sampling rate to {self.frame_sample_rate}")
+        backlog = self.frame_queue.qsize()
+        if backlog < 500:
+            self.frame_sample_rate = 1
+        else:
+            self.frame_sample_rate = ceil((backlog - 400)/100)
+            print(f"Queue size {self.frame_queue.qsize()}; sampling rate set to {self.frame_sample_rate}")
+            
 
     def _get_decoded_frame_tuple(self):
         new_frame = self.frame_queue.get()
         timestamp = self.frame_time_queue.get()
         return self._decode_frame(new_frame), self._decode_frame_greyscale(new_frame), timestamp
 
-    def _detect_motion(self, old_frame_greyscale, new_frame_greyscale) -> bool:
+    def _detect_motion(self, old_frame_greyscale, new_frame_greyscale, track_path=False) -> bool:
         """Detection motion between two frames using contours."""
         if old_frame_greyscale is None:
             return False
@@ -115,8 +126,8 @@ class MotionDetector:
             key=lambda x: x[1],
             default=(None, 0)
         )
-        if largest_area > self.motion_threshold:
-            if self.false_alarm is True:
+        if largest_area > self.motion_area_threshold:
+            if self.false_alarm is True and track_path:
                 M = cv2.moments(largest_contour)
                 if M["m00"] != 0:
                     cX = int(M["m10"] / M["m00"])
@@ -134,10 +145,9 @@ class MotionDetector:
         """
         if len(self.principal_contour_centroids) > 1:
             points = self.principal_contour_centroids
-            threshold = self.cumulative_motion_threshold
             for i in range(len(points)):
                 for j in range(i + 1, len(points)):
-                    if dist(points[i], points[j]) > threshold:
+                    if dist(points[i], points[j]) > self.cumulative_motion_threshold:
                         self.false_alarm = False
                         return
 
@@ -158,7 +168,7 @@ class MotionDetector:
         # Iterate over contours and determine if any are large enough to count as motion
         modified_frame = new_frame.copy()
         for contour in contours:
-            if cv2.contourArea(contour) >= self.motion_threshold:
+            if cv2.contourArea(contour) >= self.motion_area_threshold:
                 x, y, w, h = cv2.boundingRect(contour)
                 cv2.rectangle(modified_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
         return modified_frame
@@ -190,7 +200,7 @@ class MotionDetector:
                 # new_frame = self._draw_motion_areas_on_frame(old_frame, new_frame)
                 self.video_writer.add_frame(new_frame, timestamp)
                 # check for continued motion
-                if self._detect_motion(old_grey, new_grey):
+                if self._detect_motion(old_grey, new_grey, track_path=True):
                     motionless_frames = 0
                 else:
                     motionless_frames += 1
