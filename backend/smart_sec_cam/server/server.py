@@ -2,6 +2,8 @@ import json
 import os
 import time
 from functools import wraps
+import sqlite3
+import logging
 
 import eventlet
 import jwt.exceptions
@@ -14,6 +16,7 @@ from smart_sec_cam.auth.database import AuthDatabase
 from smart_sec_cam.auth.models import User
 from smart_sec_cam.redis import RedisImageReceiver
 from smart_sec_cam.video.manager import VideoManager
+from smart_sec_cam.server.video_db import VideoDatabase
 
 # SocketIO & CORS
 eventlet.monkey_patch()
@@ -28,6 +31,11 @@ VIDEO_DIR = "data/videos"
 rooms = {}
 ENABLE_USER_REGISTRATION = False
 
+# After VIDEO_DIR definition
+video_db = VideoDatabase(os.environ.get('DB_PATH', 'data/videos.db'))
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def require_token(f):
     @wraps(f)
@@ -216,11 +224,35 @@ def delete_video(video_name):
     video_manager = VideoManager(video_dir=VIDEO_DIR)
     try:
         video_manager.delete_video(video_name)
+        video_db.mark_video_deleted(video_name)
         return jsonify({"message": f"Video '{video_name}' and its alternate formats deleted successfully."}), 200
     except FileNotFoundError:
         return jsonify({"error": f"Video '{video_name}' not found in any format."}), 404
     except PermissionError as e:
         return jsonify({"error": str(e)}), 403
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {e}"}), 500
+
+
+@app.route('/api/video/<video_name>/star', methods=['POST'])
+def toggle_star(video_name):
+    try:
+        data = request.get_json()
+        starred = data.get('starred', False)
+        
+        conn = sqlite3.connect(os.environ.get('DB_PATH', 'data/videos.db'))
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE videos 
+            SET starred = ?
+            WHERE filename = ? AND deleted_at IS NULL
+        """, (starred, video_name))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({"message": "Star status updated", "starred": starred}), 200
     except Exception as e:
         return jsonify({"error": f"An error occurred: {e}"}), 500
 
@@ -259,6 +291,21 @@ if __name__ == '__main__':
 
     VIDEO_DIR = args.video_dir
     ENABLE_USER_REGISTRATION = bool(int(os.environ.get("ENABLE_REGISTRATION")))
+
+    # Ensure database directory exists
+    db_path = os.environ.get('DB_PATH', '/backend/data/db/videos.db')
+    logger.info(f"Using database path: {db_path}")
+    
+    try:
+        video_db = VideoDatabase(db_path)
+        logger.info("Successfully initialized VideoDatabase")
+        
+        # Sync database with video directory
+        added_files, removed_files = video_db.sync_with_directory(VIDEO_DIR)
+        logger.info(f"Database sync complete. Added: {len(added_files)}, Removed: {len(removed_files)}")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
+        raise
 
     socketio.start_background_task(listen_for_images, args.redis_url, args.redis_port)
     socketio.run(app, host='0.0.0.0', port="8443", debug=True, certfile='certs/sec-cam-server.cert',

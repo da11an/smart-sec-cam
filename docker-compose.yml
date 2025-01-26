@@ -22,6 +22,7 @@ services:
       - API_URL=${API_URL}
       - PYTHONUNBUFFERED=1
       - ENABLE_REGISTRATION=0
+      - DB_PATH=/backend/data/db/videos.db
     ports:
       - "8443:8443"
     depends_on:

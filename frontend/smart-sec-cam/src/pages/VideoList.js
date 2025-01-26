@@ -56,6 +56,7 @@ export default function VideoList(props) {
     const [jumpToPage, setJumpToPage] = React.useState("");
     const [currentPage, setCurrentPage] = React.useState(1);
     const itemsPerPage = 12;
+    const [starredVideos, setStarredVideos] = useState(new Set());
 
     React.useEffect(() => {
         if (cookies.token == null) {
@@ -166,6 +167,34 @@ export default function VideoList(props) {
     const handlePageChange = (newPage) => {
         if (newPage > 0 && newPage <= totalPages) {
             setCurrentPage(newPage);
+        }
+    };
+
+    const handleStarToggle = async (videoFileName) => {
+        try {
+            const newStarred = !starredVideos.has(videoFileName);
+            const response = await fetch(`${SERVER_URL}/api/video/${videoFileName}/star`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-access-token': cookies.token
+                },
+                body: JSON.stringify({ starred: newStarred })
+            });
+
+            if (response.ok) {
+                setStarredVideos(prev => {
+                    const newSet = new Set(prev);
+                    if (newStarred) {
+                        newSet.add(videoFileName);
+                    } else {
+                        newSet.delete(videoFileName);
+                    }
+                    return newSet;
+                });
+            }
+        } catch (error) {
+            console.error('Error toggling star:', error);
         }
     };
 
@@ -307,12 +336,21 @@ export default function VideoList(props) {
                     overlayClassName="videoModalOverlay"
                 >
                     <div className="modalInfoBar">
-                        <span className="modalVideoDate">{extractDateTimeFromFilename(selectedVideoFile)}</span>                    
+                        <span className="modalVideoDate">
+                            {extractDateTimeFromFilename(selectedVideoFile)}
+                        </span>
                         <span className="modalVideoDuration">
                             {videoDurations[selectedVideoFile]
                                 ? formatDuration(videoDurations[selectedVideoFile])
                                 : "Loading..."}
                         </span>
+                        <button
+                            onClick={() => handleStarToggle(selectedVideoFile)}
+                            className={`starButton ${starredVideos.has(selectedVideoFile) ? 'starred' : ''}`}
+                            title={starredVideos.has(selectedVideoFile) ? "Unstar video" : "Star video"}
+                        >
+                            {starredVideos.has(selectedVideoFile) ? "★" : "☆"}
+                        </button>
                         <a
                             href={`${SERVER_URL}/api/video/${selectedVideoFile}?token=${cookies.token}`}
                             className="downloadButton"
