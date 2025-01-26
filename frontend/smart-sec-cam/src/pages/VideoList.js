@@ -38,10 +38,11 @@ function extractDateTimeFromFilename(filename) {
             zone: "utc",
         });
         const localTime = utcTime.setZone("America/Chicago");
-        return localTime.toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS);
+        return localTime.toLocaleString(DateTime.DATETIME_MED);
     }
     return filename;
 }
+
 
 export default function VideoList(props) {
     const [videoFileNames, setVideoFileNames] = React.useState([]);
@@ -117,8 +118,63 @@ export default function VideoList(props) {
     }, [tokenTTL]);
 
     function setVideoList(videoList) {
+        // First set the video list to ensure thumbnails start loading
         setVideoFileNames(videoList);
     }
+
+    React.useEffect(() => {
+        const fetchStarStatus = async (filename) => {
+            try {
+                const response = await fetch(`${SERVER_URL}/api/video/${encodeURIComponent(filename)}/info`, {
+                    headers: {
+                        'x-access-token': cookies.token
+                    }
+                });
+                if (!response.ok) {
+                    console.warn(`Failed to fetch star status for ${filename}`);
+                    return false;
+                }
+                const data = await response.json();
+                return data.starred;
+            } catch (error) {
+                console.warn(`Error fetching star status for ${filename}:`, error);
+                return false;
+            }
+        };
+
+        const fetchAllStarStatus = async () => {
+            if (!videoFileNames.length) return;
+
+            // Process in batches of 5
+            const batchSize = 5;
+            const starredSet = new Set();
+
+            for (let i = 0; i < videoFileNames.length; i += batchSize) {
+                const batch = videoFileNames.slice(i, i + batchSize);
+                try {
+                    const results = await Promise.all(
+                        batch.map(async filename => {
+                            const isStarred = await fetchStarStatus(filename);
+                            if (isStarred) {
+                                starredSet.add(filename);
+                            }
+                            return { filename, isStarred };
+                        })
+                    );
+                    
+                    // Update starred videos after each batch
+                    setStarredVideos(new Set(starredSet));
+                } catch (error) {
+                    console.error('Error processing batch:', error);
+                }
+
+                // Add a small delay between batches
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+        };
+
+        fetchAllStarStatus();
+    }, [videoFileNames, cookies.token]);
 
     function handleMetadataLoaded(videoFileName, duration) {
         setVideoDurations((prevDurations) => ({
@@ -271,7 +327,7 @@ export default function VideoList(props) {
                         ) : (
                             // Render video thumbnails
                             <div key={item} className="videoGridItem">
-                                <div className="videoThumbnailContainer">
+                                <div className={`videoThumbnailContainer ${starredVideos.has(item) ? 'starred' : ''}`}>
                                     <button
                                         onClick={() => handleClick(item)}
                                         className="videoThumbnailButton"
@@ -286,7 +342,6 @@ export default function VideoList(props) {
                                         <div className="thumbnailOverlay">
                                             <div className="thumbnailText">
                                                 <span className="videoDate">{extractDateTimeFromFilename(item)}</span>
-                                                <br />
                                                 <span className="videoDuration">
                                                     {videoDurations[item]
                                                         ? formatDuration(videoDurations[item])

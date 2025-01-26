@@ -99,29 +99,52 @@ body {
 }
 
 /* Thumbnail overlay and info bar */
+.videoThumbnailContainer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.videoThumbnailContainer.starred {
+    box-shadow: 0 0 0 2px #ffd700;  /* Reduced from 3px to 2px */
+    /* Alternative style if you prefer a more subtle look: */
+    /* box-shadow: 0 0 0 1px #ffd700, 0 0 3px 1px rgba(255, 215, 0, 0.5); */
+}
+
 .thumbnailOverlay {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: rgba(0, 0, 0, 0.7); /* Shadow overlay */
+    background: rgba(0, 0, 0, 0.5);  /* Reduced opacity */
     color: white;
+    padding: 8px;
+    transition: opacity 0.3s ease;
+}
+
+.thumbnailText {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 14px;
-    font-weight: bold;
-    padding: 5px 10px;
-    text-align: left;
-    border-radius: 0 0 4px 4px;
-    transition: opacity 0.3s ease; /* Smooth fade-out effect */
-    opacity: 1; /* Fully visible by default */
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    font-size: 0.85em;
 }
 
-/* On hover, hide the overlay */
+.videoDate {
+    display: block;
+    margin-bottom: 2px;
+}
+
+.videoDuration {
+    font-size: 0.9em;  /* Slightly smaller than the date */
+    opacity: 0.9;
+}
+
 .videoThumbnailButton:hover .thumbnailOverlay {
-    opacity: 0; /* Fully hidden */
-    transition: opacity 0.3s ease; /* Smooth fade-out effect */
+    opacity: 0;
 }
 
 /* Pagination styles */
