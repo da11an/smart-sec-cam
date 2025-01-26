@@ -64,7 +64,7 @@ body {
 .videoThumbnailButton {
     background-color: #383838;
     border: none;
-    padding: 10px;
+    padding: 1px;
     border-radius: 8px;
     cursor: pointer;
     width: 100%;
@@ -74,7 +74,8 @@ body {
 
 .videoThumbnailButton:hover {
     background-color: #4a4a4a;
-    transform: scale(1.05);
+    transform: scale(1.2);
+    z-index: 10; /* Bring the hovered element to the front */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
@@ -86,6 +87,15 @@ body {
     width: 100%;
     height: auto;
     border-radius: 4px;
+}
+
+/* Video Thumbnail */
+.videoPlayer {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
 }
 
 /* Thumbnail overlay and info bar */
@@ -186,16 +196,13 @@ body {
     background: #1c1c1c;
     border-radius: 8px;
     padding: 10px;
-    max-width: 90%;
-    max-height: 90%;
-    width: 800px;
-    height: auto;
+    width: 95vw; /* Set width to 95% of viewport width */
+    height: 95vh; /* Set height to 95% of viewport height */
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    z-index: 10;
 }
 
 .videoModalOverlay {
@@ -209,11 +216,27 @@ body {
 
 .modalContent {
     width: 100%;
-    height: 100%;
+    height: calc(100% - 40px); /* Subtract space for the info bar */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
+}
+
+.modalContent video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Maintain aspect ratio while filling space */
+}
+
+.modalInfoBar {
+    width: 100%;
+    padding: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
 }
 
 /* Action Buttons */

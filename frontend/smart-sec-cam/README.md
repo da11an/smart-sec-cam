@@ -72,7 +72,7 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/t
 ### Dallan's notes about rebuilding parts after changes
 
 - Rebuild server frontend/backend: `root@rpi5a:/home/dallan/smart-sec-cam# docker build -t server-arm -f backend/smart_sec_cam/server/Dockerfile .`
-- Rebuild motion detection and video writing: `root@rpi5a:/home/dallan/smart-sec-cam/backend# docker build -t motion-arm -f smart_sec_cam/motion/Dockerfile .`
+- Rebuild motion detection and video writing: `root@rpi5a:/home/dallan/smart-sec-cam/backend# docker build -t motion-arm -f backend/smart_sec_cam/motion/Dockerfile ./backend`
 - Push out changes after docker builds:
     `root@rpi5a:/home/dallan/smart-sec-cam# docker-compose down`
     `root@rpi5a:/home/dallan/smart-sec-cam# API_URL=rpi5a:8443 docker-compose up -d`

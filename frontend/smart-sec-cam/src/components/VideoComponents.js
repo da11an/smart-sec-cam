@@ -7,6 +7,7 @@ export function VideoPlayer(props) {
     const videoUrl = SERVER_URL + VIDEO_ENDPOINT + props.videoFileName + "?token=" + props.token;
     return (
         <ReactPlayer
+            className="videoPlayer"
             url={videoUrl}
             width="100%"
             height="90vh"

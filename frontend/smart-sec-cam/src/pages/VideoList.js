@@ -338,6 +338,7 @@ export default function VideoList(props) {
                             <ImageViewer room={selectedVideoFile} />
                         ) : (
                             <video
+                                className="videoPlayer"
                                 src={`${SERVER_URL}/api/video/${selectedVideoFile}?token=${cookies.token}`}
                                 controls
                                 autoPlay
