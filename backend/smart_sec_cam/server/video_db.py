@@ -2,12 +2,18 @@ import json
 import os
 import sqlite3
 from datetime import datetime
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Tuple
 from pkg_resources import resource_string
 import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Constants for space management (in bytes)
+GB = 1024 * 1024 * 1024
+TOTAL_SPACE_LIMIT = 30 * GB
+STARRED_SPACE_LIMIT = 20 * GB
+ALERT_THRESHOLD = 0.9  # Alert at 90% capacity
 
 class VideoDatabase:
     def __init__(self, db_path: str):
@@ -174,4 +180,122 @@ class VideoDatabase:
         """, (datetime.now(), filename))
         
         conn.commit()
-        conn.close() 
+        conn.close()
+
+    def get_space_usage(self) -> Tuple[int, int]:
+        """
+        Returns tuple of (total_space_used, starred_space_used) in bytes
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        # Get total space usage
+        cursor.execute("""
+            SELECT SUM(filesize) 
+            FROM videos 
+            WHERE deleted_at IS NULL
+        """)
+        total_space = cursor.fetchone()[0] or 0
+
+        # Get starred space usage
+        cursor.execute("""
+            SELECT SUM(filesize) 
+            FROM videos 
+            WHERE deleted_at IS NULL AND starred = 1
+        """)
+        starred_space = cursor.fetchone()[0] or 0
+
+        conn.close()
+        return (total_space, starred_space)
+
+    def manage_disk_space(self) -> Dict[str, List[str]]:
+        """
+        Manages disk space by removing videos when limits are approached.
+        Returns dict with lists of removed videos and warnings.
+        """
+        total_space, starred_space = self.get_space_usage()
+        removed_videos = []
+        warnings = []
+
+        # Check if we're approaching limits
+        if total_space > ALERT_THRESHOLD * TOTAL_SPACE_LIMIT:
+            warnings.append(f"Approaching total space limit ({total_space / GB:.1f}GB / {TOTAL_SPACE_LIMIT / GB}GB)")
+        if starred_space > ALERT_THRESHOLD * STARRED_SPACE_LIMIT:
+            warnings.append(f"Approaching starred space limit ({starred_space / GB:.1f}GB / {STARRED_SPACE_LIMIT / GB}GB)")
+
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        try:
+            # First, try to remove unstarred videos if total space is exceeded
+            if total_space > TOTAL_SPACE_LIMIT:
+                cursor.execute("""
+                    SELECT filename, filesize 
+                    FROM videos 
+                    WHERE deleted_at IS NULL AND starred = 0
+                    ORDER BY created_at ASC
+                """)
+                unstarred_videos = cursor.fetchall()
+
+                space_to_free = total_space - (TOTAL_SPACE_LIMIT * 0.9)  # Free up to 90% capacity
+                freed_space = 0
+
+                for filename, filesize in unstarred_videos:
+                    if freed_space >= space_to_free:
+                        break
+                    
+                    # Mark as deleted in database
+                    cursor.execute("""
+                        UPDATE videos 
+                        SET deleted_at = ? 
+                        WHERE filename = ?
+                    """, (datetime.now(), filename))
+                    
+                    # Delete actual file
+                    try:
+                        os.remove(os.path.join(os.path.dirname(self.db_path), '..', 'videos', filename))
+                        removed_videos.append(filename)
+                        freed_space += filesize
+                    except OSError as e:
+                        logger.error(f"Failed to delete file {filename}: {e}")
+
+            # If starred space is still exceeded, remove starred videos
+            starred_space = self.get_space_usage()[1]  # Get updated starred space
+            if starred_space > STARRED_SPACE_LIMIT:
+                cursor.execute("""
+                    SELECT filename, filesize 
+                    FROM videos 
+                    WHERE deleted_at IS NULL AND starred = 1
+                    ORDER BY created_at ASC
+                """)
+                starred_videos = cursor.fetchall()
+
+                space_to_free = starred_space - (STARRED_SPACE_LIMIT * 0.9)
+                freed_space = 0
+
+                for filename, filesize in starred_videos:
+                    if freed_space >= space_to_free:
+                        break
+                    
+                    cursor.execute("""
+                        UPDATE videos 
+                        SET deleted_at = ? 
+                        WHERE filename = ?
+                    """, (datetime.now(), filename))
+                    
+                    try:
+                        os.remove(os.path.join(os.path.dirname(self.db_path), '..', 'videos', filename))
+                        removed_videos.append(filename)
+                        freed_space += filesize
+                    except OSError as e:
+                        logger.error(f"Failed to delete file {filename}: {e}")
+
+            conn.commit()
+
+        finally:
+            conn.close()
+
+        return {
+            "removed_videos": removed_videos,
+            "warnings": warnings
+        } 

@@ -1,0 +1,65 @@
+.NavBar {
+    position: relative;
+    width: 100%;
+    background-color: #292929;
+    padding: 10px;
+    color: #fff;
+    font-size: 16px;
+    text-align: left;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.hamburgerButton {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+.menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #292929;
+    width: 300px;
+    padding: 10px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    display: none;
+    z-index: 1000;
+}
+
+.menu.open {
+    display: block;
+}
+
+.menu button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    background-color: #383838;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.menu button:hover {
+    background-color: #484848;
+}
+
+.menuSpaceUsage {
+    margin: 10px 0;
+}
+
+/* Update SpaceUsage styles when in menu */
+.menuSpaceUsage .space-usage {
+    margin: 0;
+    padding: 10px;
+}
+
+.menuSpaceUsage .usage-bar {
+    gap: 10px;
+} 

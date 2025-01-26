@@ -16,7 +16,7 @@ from smart_sec_cam.auth.database import AuthDatabase
 from smart_sec_cam.auth.models import User
 from smart_sec_cam.redis import RedisImageReceiver
 from smart_sec_cam.video.manager import VideoManager
-from smart_sec_cam.server.video_db import VideoDatabase
+from smart_sec_cam.server.video_db import VideoDatabase, TOTAL_SPACE_LIMIT, STARRED_SPACE_LIMIT
 
 # SocketIO & CORS
 eventlet.monkey_patch()
@@ -255,6 +255,77 @@ def toggle_star(video_name):
         return jsonify({"message": "Star status updated", "starred": starred}), 200
     except Exception as e:
         return jsonify({"error": f"An error occurred: {e}"}), 500
+
+
+@app.route('/api/video/space-usage', methods=['GET'])
+def get_space_usage():
+    try:
+        total_space, starred_space = video_db.get_space_usage()
+        space_management = video_db.manage_disk_space()
+        
+        # Debug logging
+        logger.info(f"Space usage - Total: {total_space}, Starred: {starred_space}")
+        logger.info(f"Limits - Total: {TOTAL_SPACE_LIMIT}, Starred: {STARRED_SPACE_LIMIT}")
+        
+        response_data = {
+            "total_space": total_space,
+            "starred_space": starred_space,
+            "total_limit": TOTAL_SPACE_LIMIT,
+            "starred_limit": STARRED_SPACE_LIMIT,
+            "warnings": space_management["warnings"],
+            "removed_videos": space_management["removed_videos"]
+        }
+        
+        # Debug logging
+        logger.info(f"Sending response: {response_data}")
+        
+        return jsonify(response_data), 200
+    except Exception as e:
+        logger.error(f"Error in get_space_usage: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/video/upload', methods=['POST'])
+def upload_video():
+    # ... existing upload code ...
+    
+    # After successful upload, check space usage
+    space_management = video_db.manage_disk_space()
+    if space_management["warnings"]:
+        return jsonify({
+            "message": "Video uploaded successfully but approaching storage limits",
+            "warnings": space_management["warnings"],
+            "removed_videos": space_management["removed_videos"]
+        }), 201
+    
+    return jsonify({"message": "Video uploaded successfully"}), 201
+
+
+@app.route('/api/video/<video_name>/info', methods=['GET'])
+def get_video_info(video_name):
+    try:
+        conn = sqlite3.connect(os.environ.get('DB_PATH', 'data/db/videos.db'))
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT starred 
+            FROM videos 
+            WHERE filename = ? AND deleted_at IS NULL
+        """, (video_name,))
+        
+        result = cursor.fetchone()
+        conn.close()
+        
+        if result is not None:
+            return jsonify({
+                "starred": bool(result[0])
+            }), 200
+        else:
+            return jsonify({"error": "Video not found"}), 404
+            
+    except Exception as e:
+        logger.error(f"Error getting video info: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 def listen_for_images(redis_url: str, redis_port: int):

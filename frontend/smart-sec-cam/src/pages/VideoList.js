@@ -10,6 +10,7 @@ import { DateTime } from "luxon";
 import ImageViewer from "../components/ImageViewer";
 import { VideoPreviewer } from "../components/VideoComponents";
 import NavBar from "../components/NavBar";
+import SpaceUsage from '../components/SpaceUsage';
 
 import { validateToken } from "../utils/ValidateToken";
 import { getTokenTTL } from "../utils/GetTokenTTL";
@@ -129,6 +130,9 @@ export default function VideoList(props) {
     function handleClick(videoFileName) {
         setSelectedVideoFile(videoFileName);
         setIsModalOpen(true);
+        if (!rooms.includes(videoFileName)) {
+            fetchStarStatus(videoFileName);
+        }
     }
 
     function handleDelete(videoFileName) {
@@ -170,9 +174,46 @@ export default function VideoList(props) {
         }
     };
 
+    const fetchStarStatus = async (videoFileName) => {
+        try {
+            const response = await fetch(`${SERVER_URL}/api/video/${videoFileName}/info`, {
+                headers: {
+                    'x-access-token': cookies.token
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                setStarredVideos(prev => {
+                    const newSet = new Set(prev);
+                    if (data.starred) {
+                        newSet.add(videoFileName);
+                    } else {
+                        newSet.delete(videoFileName);
+                    }
+                    return newSet;
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching star status:', error);
+        }
+    };
+
     const handleStarToggle = async (videoFileName) => {
         try {
             const newStarred = !starredVideos.has(videoFileName);
+            
+            // Optimistic update
+            setStarredVideos(prev => {
+                const newSet = new Set(prev);
+                if (newStarred) {
+                    newSet.add(videoFileName);
+                } else {
+                    newSet.delete(videoFileName);
+                }
+                return newSet;
+            });
+
             const response = await fetch(`${SERVER_URL}/api/video/${videoFileName}/star`, {
                 method: 'POST',
                 headers: {
@@ -182,19 +223,31 @@ export default function VideoList(props) {
                 body: JSON.stringify({ starred: newStarred })
             });
 
-            if (response.ok) {
+            if (!response.ok) {
+                // Revert on failure
                 setStarredVideos(prev => {
                     const newSet = new Set(prev);
                     if (newStarred) {
-                        newSet.add(videoFileName);
-                    } else {
                         newSet.delete(videoFileName);
+                    } else {
+                        newSet.add(videoFileName);
                     }
                     return newSet;
                 });
+                console.error('Failed to update star status');
             }
         } catch (error) {
             console.error('Error toggling star:', error);
+            // Revert on error
+            setStarredVideos(prev => {
+                const newSet = new Set(prev);
+                if (!prev.has(videoFileName)) {
+                    newSet.add(videoFileName);
+                } else {
+                    newSet.delete(videoFileName);
+                }
+                return newSet;
+            });
         }
     };
 

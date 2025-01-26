@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCookies } from 'react-cookie';
+import SpaceUsage from './SpaceUsage';
 
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
@@ -28,9 +30,9 @@ const darkTheme = createTheme({
 export default function ButtonAppBar(props) {
     const navigate = useNavigate();
     const [anchorEl, setAnchorEl] = useState(null);
-    const [editingMode, setEditingMode] = useState(false); // State for editing mode toggle
+    const [editingMode, setEditingMode] = useState(false);
+    const [cookies, , removeCookie] = useCookies(['token']);
 
-    // Handlers for the menu
     const handleMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
     };
@@ -44,25 +46,26 @@ export default function ButtonAppBar(props) {
         handleMenuClose();
     };
 
+    const handleLogout = () => {
+        removeCookie('token');
+        navigate('/', {});
+        handleMenuClose();
+    };
+
     const toggleEditingMode = (event) => {
         setEditingMode(event.target.checked);
-        props.onEditingModeChange(event.target.checked); // Notify parent component
+        props.onEditingModeChange(event.target.checked);
     };
 
     return (
         <Box sx={{
             flexGrow: 0,
-            height: '48px',
-            minHeight: '48px',
-            maxHeight: '48px',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            flexDirection: 'column'
         }}>
             <ThemeProvider theme={darkTheme}>
                 <AppBar position="static">
                     <Toolbar variant="dense" color="primary">
-                        {/* Menu Icon with Dropdown */}
                         <IconButton
                             size="large"
                             edge="start"
@@ -74,7 +77,6 @@ export default function ButtonAppBar(props) {
                             <MenuIcon />
                         </IconButton>
 
-                        {/* Dropdown Menu */}
                         <Menu
                             anchorEl={anchorEl}
                             open={Boolean(anchorEl)}
@@ -82,7 +84,6 @@ export default function ButtonAppBar(props) {
                         >
                             <MenuItem onClick={() => goToPage('/live')}>Live</MenuItem>
                             <MenuItem onClick={() => goToPage('/videos')}>Videos</MenuItem>
-                            
                             <MenuItem>
                                 <FormControlLabel
                                     control={
@@ -95,9 +96,19 @@ export default function ButtonAppBar(props) {
                                     label="Editing Mode"
                                 />
                             </MenuItem>
+                            <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                            <MenuItem sx={{ 
+                                display: 'block', 
+                                width: '300px',
+                                '&:hover': {
+                                    backgroundColor: 'transparent',
+                                    cursor: 'default'
+                                }
+                            }}>
+                                <SpaceUsage />
+                            </MenuItem>
                         </Menu>
 
-                        {/* App Title */}
                         <Typography variant="h6" component="div" align="left" sx={{ flexGrow: 1 }}>
                             Smart Home and Nature Camera
                         </Typography>
