@@ -75,7 +75,7 @@ body {
 .videoThumbnailButton:hover {
     background-color: #4a4a4a;
     transform: scale(1.2);
-    z-index: 10; /* Bring the hovered element to the front */
+    z-index: 1; /* Lower z-index value */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
@@ -196,13 +196,13 @@ body {
     background: #1c1c1c;
     border-radius: 8px;
     padding: 10px;
-    width: 95vw; /* Set width to 95% of viewport width */
-    height: 95vh; /* Set height to 95% of viewport height */
+    width: 95vw;
+    height: 90vh;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    z-index: 10;
+    z-index: 1000; /* Higher z-index value */
 }
 
 .videoModalOverlay {
@@ -212,6 +212,7 @@ body {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.85);
+    z-index: 999; /* Just below modal, but above everything else */
 }
 
 .modalContent {
